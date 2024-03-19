@@ -1,0 +1,26 @@
+# Blender 3.4.1 MTL File: 'Toro.blend'
+# www.blender.org
+
+newmtl Stone
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.137584 0.137584 0.137584
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Ka toro_Stone_BaseColor.png
+map_Kd toro_Stone_BaseColor.png
+
+newmtl wood
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.138039 0.043993 0.023811
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Ka toro_wood_BaseColor.png
+map_Kd toro_wood_BaseColor.png

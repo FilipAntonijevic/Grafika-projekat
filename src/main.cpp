@@ -9,6 +9,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+//za svetlo
+#include <GL/gl.h>
+#include <GL/glu.h>
+
+
 #include <learnopengl/filesystem.h>
 #include <learnopengl/shader.h>
 #include <learnopengl/camera.h>
@@ -27,6 +32,8 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
+
+unsigned int loadTexture(char const * path);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -58,8 +65,16 @@ struct ProgramState {
     bool ImGuiEnabled = false;
     Camera camera;
     bool CameraMouseMovementUpdateEnabled = true;
-    glm::vec3 backpackPosition = glm::vec3(0.0f);
-    float backpackScale = 0.2f;
+    glm::vec3 mammoth1Position = glm::vec3(5, -0.7, 0);
+    glm::vec3 mammoth2Position = glm::vec3(-41, -23.5, -8);
+    glm::vec3 islandPosition = glm::vec3(-60, 215.0f, -43);
+    glm::vec3 toroPosition = glm::vec3(-17, -0.7, -17);
+    glm::vec3 firePosition = glm::vec3(-17, 6.5, -17);
+    float mammoth1Scale = 0.1f;
+    float mammoth2Scale = 0.07f;
+    float islandScale = 1.5f;
+    float toroScale = 11.6008f;
+    float fireScale = 0.02010f;
     PointLight pointLight;
     ProgramState()
             : camera(glm::vec3(0.0f, 0.0f, 3.0f)) {}
@@ -115,9 +130,10 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
+    bool light_on_off = false;
     // glfw window creation
     // --------------------
-    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "grafika", NULL, NULL);
     if (window == NULL) {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -139,7 +155,7 @@ int main() {
     }
 
     // tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
-    stbi_set_flip_vertically_on_load(true);
+    stbi_set_flip_vertically_on_load(false);
 
     programState = new ProgramState;
     programState->LoadFromFile("resources/program_state.txt");
@@ -153,7 +169,6 @@ int main() {
     (void) io;
 
 
-
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330 core");
 
@@ -164,25 +179,154 @@ int main() {
     // build and compile shaders
     // -------------------------
     Shader ourShader("resources/shaders/2.model_lighting.vs", "resources/shaders/2.model_lighting.fs");
-    Shader island_shader("resources/shaders/2.model_lighting.vs", "resources/shaders/2.model_lighting.fs");
     Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
+    Shader blendingShader("resources/shaders/blending.vs", "resources/shaders/blending.fs");
     // load models
     // -----------
     Model island("resources/objects/island1/4.obj");
-    Model ourModel("resources/objects/mammoth/mammoth.obj");
-    ourModel.SetShaderTextureNamePrefix("material.");
-    island.SetShaderTextureNamePrefix("materijal.");
-//    ourModel.SetShaderTextureNamePrefix("material.");
+    island.SetShaderTextureNamePrefix("material.");
+
+    Model mammoth1("resources/objects/mammoth/mammoth.obj");
+    mammoth1.SetShaderTextureNamePrefix("material.");
+
+    Model mammoth2("resources/objects/mammoth/mammoth.obj");
+    mammoth2.SetShaderTextureNamePrefix("material.");
+
+    Model toro("resources/objects/toro/Toro.obj");
+    toro.SetShaderTextureNamePrefix("materijal.");
+
+    //Model fire("resources/objects/campfire2/Campfire.obj");
+    Model fire("resources/objects/fire/campfire2.obj");
+    fire.SetShaderTextureNamePrefix("materijal.");
 
     PointLight& pointLight = programState->pointLight;
-    pointLight.position = glm::vec3(4.0f, 4.0, 0.0);
-    pointLight.ambient = glm::vec3(12.0, 12.0, 12.0);
-    pointLight.diffuse = glm::vec3(0.6, 0.6, 0.6);
+    pointLight.position = glm::vec3(-17.0f, 8.0, -17.0);
+    pointLight.ambient = glm::vec3(15.0, 15.0, 15.0);
+    pointLight.diffuse = glm::vec3(0.9, 0.9, 0.9);
     pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
 
-    pointLight.constant = 1.0f;
+    pointLight.constant = 17.0f;
     pointLight.linear = 0.09f;
     pointLight.quadratic = 0.032f;
+
+    // Grass vertices
+    float transparentVertices[] = {
+            // positions         // texture Coords (swapped y coordinates because texture is flipped upside down)
+            0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
+            0.0f, -0.5f,  0.0f,  0.0f,  1.0f,
+            1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+
+            0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
+            1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+            1.0f,  0.5f,  0.0f,  1.0f,  0.0f
+    };
+
+    // transparent grass location
+    vector<glm::vec3> grassPositions1;
+    vector<float> grassRotation1;
+
+    vector<glm::vec3> grassPositions2;
+    vector<float> grassRotation2;
+
+    vector<glm::vec3> grassPositions3;
+    vector<float> grassRotation3;
+
+// Define parameters for the circle
+    int numGrass = 299;
+    float radius = 2.95f; // Adjust the radius as needed
+
+// Generate grass positions in a circle
+//1
+    for (int i = 0; i < numGrass; i+=2) {
+        float angle = glm::two_pi<float>() * i / numGrass; // Calculate angle for each grass element
+        float x = (radius * cos(angle))*rand()/(RAND_MAX);
+        float z = (radius * sin(angle))*rand()/(RAND_MAX);
+        float y = rand() % 5 * 0.1f;
+        if(y < 0.3){
+            y = 0.3;
+        }// Randomize the height slightly
+        grassPositions1.push_back(glm::vec3(x+0.4, y, z+0.59));
+        grassRotation1.push_back(rand() % 180);
+    }
+    for (int i =1; i < numGrass; i+=2) {
+        float angle = glm::two_pi<float>() * i / numGrass; // Calculate angle for each grass element
+        float x = (radius * cos(angle));
+        float z = (radius * sin(angle));
+        float y = rand() % 5 * 0.1f;
+        if(y < 0.3){
+            y = 0.3;
+        }// Randomize the height slightly
+        grassPositions1.push_back(glm::vec3(x+0.4, y, z+0.59));
+        grassRotation1.push_back(rand() % 180);
+    }
+//2
+
+    radius = 1.85;
+    numGrass = 199;
+    for (int i = 0; i < numGrass; i+=2) {
+        float angle = glm::two_pi<float>() * i / numGrass; // Calculate angle for each grass element
+        float x = (radius * cos(angle))*rand()/(RAND_MAX);
+        float z = (radius * sin(angle))*rand()/(RAND_MAX);
+        float y = rand() % 5 * 0.1f;
+        if(y < 0.3){
+            y = 0.3;
+        }// Randomize the height slightly
+        grassPositions2.push_back(glm::vec3(x-2.7, y-2.15, z-0.2));
+        grassRotation2.push_back(rand() % 180);
+    }
+    for (int i =1; i < numGrass; i+=2) {
+        float angle = glm::two_pi<float>() * i / numGrass; // Calculate angle for each grass element
+        float x = (radius * cos(angle));
+        float z = (radius * sin(angle));
+        float y = rand() % 5 * 0.1f;
+        if(y < 0.3){
+            y = 0.3;
+        }// Randomize the height slightly
+        grassPositions2.push_back(glm::vec3(x-2.7, y-2.15, z-0.13));
+        grassRotation2.push_back(rand() % 180);
+    }
+
+    radius = 1.35;
+    numGrass = 99;
+    for (int i = 0; i < numGrass; i+=2) {
+        float angle = glm::two_pi<float>() * i / numGrass; // Calculate angle for each grass element
+        float x = (radius * cos(angle))*rand()/(RAND_MAX);
+        float z = (radius * sin(angle))*rand()/(RAND_MAX);
+        float y = rand() % 5 * 0.1f;
+        if(y < 0.3){
+            y = 0.3;
+        }// Randomize the height slightly
+        grassPositions3.push_back(glm::vec3(x-0.2, y-4.8, z-1.6));
+        grassRotation3.push_back(rand() % 180);
+    }
+    for (int i =1; i < numGrass; i+=2) {
+        float angle = glm::two_pi<float>() * i / numGrass; // Calculate angle for each grass element
+        float x = (radius * cos(angle));
+        float z = (radius * sin(angle));
+        float y = rand() % 5 * 0.1f;
+        if(y < 0.3){
+            y = 0.3;
+        }// Randomize the height slightly
+        grassPositions3.push_back(glm::vec3(x-0.2, y-4.8, z-1.6));
+        grassRotation3.push_back(rand() % 180);
+    }
+    // transparent VAO
+    unsigned int transparentVAO, transparentVBO;
+    glGenVertexArrays(1, &transparentVAO);
+    glGenBuffers(1, &transparentVBO);
+    glBindVertexArray(transparentVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, transparentVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(transparentVertices), transparentVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glBindVertexArray(0);
+
+    // load textures
+    // -------------
+    // Grass texture
+    unsigned int grassTexture = loadTexture(FileSystem::getPath("resources/textures/grass.png").c_str());
 
     float skyboxVertices[] = {
             // positions
@@ -238,7 +382,6 @@ int main() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    stbi_set_flip_vertically_on_load(false);
     vector<std::string> faces
             {
                     FileSystem::getPath("/resources/textures/skybox/nx.jpg"),
@@ -257,6 +400,9 @@ int main() {
 
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    blendingShader.use();
+    blendingShader.setInt("texture1", 0);
 
     // render loop
     // -----------
@@ -277,6 +423,12 @@ int main() {
         glClearColor(programState->clearColor.r, programState->clearColor.g, programState->clearColor.b, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        if((glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) && programState->CameraMouseMovementUpdateEnabled == true){
+            programState->CameraMouseMovementUpdateEnabled = !programState->CameraMouseMovementUpdateEnabled;
+        }
+        if((glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) && programState->CameraMouseMovementUpdateEnabled == false){
+            programState->CameraMouseMovementUpdateEnabled = true;
+        }
         // don't forget to enable shader before setting uniforms
         ourShader.use();
         //ovo sam promenio
@@ -292,19 +444,109 @@ int main() {
         ourShader.setFloat("material.shininess", 32.0f);
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(programState->camera.Zoom),
-                                                (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
+                                                (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100000.0f);
         glm::mat4 view = programState->camera.GetViewMatrix();
         ourShader.setMat4("projection", projection);
         ourShader.setMat4("view", view);
 
         // render the loaded model
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model,
-                               programState->backpackPosition); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(programState->backpackScale));    // it's a bit too big for our scene, so scale it down
+        glm::mat4 model;
+
+        //toro
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, programState->toroPosition);
+        model = glm::scale(model, glm::vec3(programState->toroScale));
+        model = glm::rotate(model, glm::radians(180.0f), glm::vec3 (0.0, 1.0f, 0.0f));
         ourShader.setMat4("model", model);
-        ourModel.Draw(ourShader);
-        island.Draw(island_shader);
+        toro.Draw(ourShader);
+
+
+        if ((glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) && light_on_off == false){
+            light_on_off = true;
+
+        }
+
+        if(light_on_off == true){
+
+            //fire
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, programState->firePosition);
+            model = glm::scale(model, glm::vec3(programState->fireScale));
+            ourShader.setMat4("model", model);
+            fire.Draw(ourShader);
+            pointLight.ambient = glm::vec3(30.0, 30.0, 30.0);
+
+        }
+        if ((glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) and light_on_off == true){
+            light_on_off = false;
+            pointLight.ambient = glm::vec3(15.0, 15.0, 15.0);
+        }
+
+        //island
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, programState->islandPosition);
+        model = glm::scale(model, glm::vec3(programState->islandScale));
+        ourShader.setMat4("model", model);
+        island.Draw(ourShader);
+
+        //mammoth1
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, programState->mammoth1Position);
+        model = glm::scale(model, glm::vec3(programState->mammoth1Scale));
+        model = glm::rotate(model, glm::radians(-90.0f), glm::vec3 (1.0, 0.0f, 0.0f));
+        model = glm::rotate(model, glm::radians(160.0f), glm::vec3 (0.0, 0.0f, 1.0f));
+        ourShader.setMat4("model", model);
+        mammoth1.Draw(ourShader);
+
+        //mammoth2
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, programState->mammoth2Position);
+        model = glm::scale(model, glm::vec3(programState->mammoth2Scale));
+        model = glm::rotate(model, glm::radians(-90.0f), glm::vec3 (1.0, 0.0f, 0.0f));
+        model = glm::rotate(model, glm::radians(100.0f), glm::vec3 (0.0, 0.0f, 1.0f));
+        ourShader.setMat4("model", model);
+        mammoth2.Draw(ourShader);
+
+
+        glDisable(GL_CULL_FACE);
+        // grass
+        blendingShader.use();
+        glm::mat4 grassM = glm::mat4(1.0f);
+        blendingShader.setMat4("projection", projection);
+        blendingShader.setMat4("view", view);
+        glBindVertexArray(transparentVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, grassTexture);
+        for (unsigned int i = 0; i < 299; i++)
+        {
+            grassM = glm::mat4(1.0f);
+            grassM = glm::scale(grassM, glm::vec3(10.0f));
+            grassM = glm::translate(grassM, grassPositions1[i]);
+            grassM = glm::rotate(grassM ,glm::radians(grassRotation1[i]), glm::vec3(0.0f ,1.0f, 0.0f));
+            blendingShader.setMat4("model", grassM);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
+        for (unsigned int i = 0; i < 199; i++)
+        {
+            grassM = glm::mat4(1.0f);
+            grassM = glm::scale(grassM, glm::vec3(10.0f));
+            grassM = glm::translate(grassM, grassPositions2[i]);
+            grassM = glm::rotate(grassM ,glm::radians(grassRotation2[i]), glm::vec3(0.0f ,1.0f, 0.0f));
+            blendingShader.setMat4("model", grassM);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
+
+        for (unsigned int i = 0; i < 99; i++)
+        {
+            grassM = glm::mat4(1.0f);
+            grassM = glm::scale(grassM, glm::vec3(10.0f));
+            grassM = glm::translate(grassM, grassPositions3[i]);
+            grassM = glm::rotate(grassM ,glm::radians(grassRotation3[i]), glm::vec3(0.0f ,1.0f, 0.0f));
+            blendingShader.setMat4("model", grassM);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
+        glEnable(GL_CULL_FACE);
+
         //skybox
         glDepthFunc(GL_LEQUAL);
         skyboxShader.use();
@@ -350,13 +592,13 @@ void processInput(GLFWwindow *window) {
         glfwSetWindowShouldClose(window, true);
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        programState->camera.ProcessKeyboard(FORWARD, deltaTime);
+        programState->camera.ProcessKeyboard(FORWARD, 0.18);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        programState->camera.ProcessKeyboard(BACKWARD, deltaTime);
+        programState->camera.ProcessKeyboard(BACKWARD, 0.18);
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        programState->camera.ProcessKeyboard(LEFT, deltaTime);
+        programState->camera.ProcessKeyboard(LEFT, 0.18);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        programState->camera.ProcessKeyboard(RIGHT, deltaTime);
+        programState->camera.ProcessKeyboard(RIGHT, 0.18);
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -404,8 +646,10 @@ void DrawImGui(ProgramState *programState) {
         ImGui::Text("Hello text");
         ImGui::SliderFloat("Float slider", &f, 0.0, 1.0);
         ImGui::ColorEdit3("Background color", (float *) &programState->clearColor);
-        ImGui::DragFloat3("Backpack position", (float*)&programState->backpackPosition);
-        ImGui::DragFloat("Backpack scale", &programState->backpackScale, 0.05, 0.1, 4.0);
+        ImGui::DragFloat3("mammoth1 position", (float*)&programState->mammoth1Position);
+        ImGui::DragFloat("mammoth1 scale", &programState->mammoth1Scale, 0.05, 0.1, 4.0);
+        ImGui::DragFloat("island scale", &programState->islandScale, 0.05, 0.1, 4.0);
+
 
         ImGui::DragFloat("pointLight.constant", &programState->pointLight.constant, 0.05, 0.0, 1.0);
         ImGui::DragFloat("pointLight.linear", &programState->pointLight.linear, 0.05, 0.0, 1.0);
@@ -468,6 +712,43 @@ unsigned int loadCubemap(vector<std::string> faces)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    return textureID;
+}
+
+unsigned int loadTexture(char const * path)
+{
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+
+    int width, height, nrComponents;
+    unsigned char *data = stbi_load(path, &width, &height, &nrComponents, 0);
+    if (data)
+    {
+        GLenum format = GL_RED;
+        if (nrComponents == 1)
+            format = GL_RED;
+        else if (nrComponents == 3)
+            format = GL_RGB;
+        else if (nrComponents == 4)
+            format = GL_RGBA;
+
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexImage2D(GL_TEXTURE_2D, 0, (GLint)format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        stbi_image_free(data);
+    }
+    else
+    {
+        std::cout << "Texture failed to load at path: " << path << std::endl;
+        stbi_image_free(data);
+    }
 
     return textureID;
 }

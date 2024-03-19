@@ -1,4 +1,4 @@
-# Install script for directory: /home/filip/Desktop/FAX/Grafika/projekat/skelet
+# Install script for directory: /home/filip/Desktop/Grafika-projekat
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -44,8 +44,8 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("/home/filip/Desktop/FAX/Grafika/projekat/skelet/cmake-build-debug/libs/glad/cmake_install.cmake")
-  include("/home/filip/Desktop/FAX/Grafika/projekat/skelet/cmake-build-debug/libs/imgui/cmake_install.cmake")
+  include("/home/filip/Desktop/Grafika-projekat/cmake-build-debug/libs/glad/cmake_install.cmake")
+  include("/home/filip/Desktop/Grafika-projekat/cmake-build-debug/libs/imgui/cmake_install.cmake")
 
 endif()
 
@@ -57,5 +57,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/filip/Desktop/FAX/Grafika/projekat/skelet/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/filip/Desktop/Grafika-projekat/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
