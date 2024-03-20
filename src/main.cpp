@@ -9,6 +9,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+//up and down movement
+#include <chrono>
+#include <cmath>
 //za svetlo
 #include <GL/gl.h>
 #include <GL/glu.h>
@@ -20,6 +23,8 @@
 #include <learnopengl/model.h>
 
 #include <iostream>
+
+float calculateHeight(float initialHeight, float amplitude, float frequency, std::chrono::steady_clock::time_point startTime);
 
 unsigned int loadCubemap(vector<std::string> faces);
 
@@ -232,15 +237,21 @@ int main() {
     vector<float> grassRotation3;
 
 // Define parameters for the circle
-    int numGrass = 299;
-    float radius = 2.95f; // Adjust the radius as needed
+    int numGrass = 1799;
+    float radius = 5.2f; // Adjust the radius as needed
 
 // Generate grass positions in a circle
 //1
     for (int i = 0; i < numGrass; i+=2) {
         float angle = glm::two_pi<float>() * i / numGrass; // Calculate angle for each grass element
         float x = (radius * cos(angle))*rand()/(RAND_MAX);
+        if(abs(x) >4.7 || abs(x) < 2){
+             x = (radius * cos(angle))*rand()/(RAND_MAX);
+        }
         float z = (radius * sin(angle))*rand()/(RAND_MAX);
+        if(abs(z) >4.7 || abs(z) < 2){
+            z = (radius * sin(angle))*rand()/(RAND_MAX);
+        }
         float y = rand() % 5 * 0.1f;
         if(y < 0.3){
             y = 0.3;
@@ -261,8 +272,8 @@ int main() {
     }
 //2
 
-    radius = 1.85;
-    numGrass = 199;
+    radius = 3.25;
+    numGrass = 699;
     for (int i = 0; i < numGrass; i+=2) {
         float angle = glm::two_pi<float>() * i / numGrass; // Calculate angle for each grass element
         float x = (radius * cos(angle))*rand()/(RAND_MAX);
@@ -271,7 +282,7 @@ int main() {
         if(y < 0.3){
             y = 0.3;
         }// Randomize the height slightly
-        grassPositions2.push_back(glm::vec3(x-2.7, y-2.15, z-0.2));
+        grassPositions2.push_back(glm::vec3(x-4.5, y-3.7, z-0.49));
         grassRotation2.push_back(rand() % 180);
     }
     for (int i =1; i < numGrass; i+=2) {
@@ -282,12 +293,12 @@ int main() {
         if(y < 0.3){
             y = 0.3;
         }// Randomize the height slightly
-        grassPositions2.push_back(glm::vec3(x-2.7, y-2.15, z-0.13));
+        grassPositions2.push_back(glm::vec3(x-4.8, y-3.7, z-0.49));
         grassRotation2.push_back(rand() % 180);
     }
 
-    radius = 1.35;
-    numGrass = 99;
+    radius = 2.7;
+    numGrass = 499;
     for (int i = 0; i < numGrass; i+=2) {
         float angle = glm::two_pi<float>() * i / numGrass; // Calculate angle for each grass element
         float x = (radius * cos(angle))*rand()/(RAND_MAX);
@@ -296,7 +307,7 @@ int main() {
         if(y < 0.3){
             y = 0.3;
         }// Randomize the height slightly
-        grassPositions3.push_back(glm::vec3(x-0.2, y-4.8, z-1.6));
+        grassPositions3.push_back(glm::vec3(x-0.3, y-8.05, z-2.9));
         grassRotation3.push_back(rand() % 180);
     }
     for (int i =1; i < numGrass; i+=2) {
@@ -307,16 +318,84 @@ int main() {
         if(y < 0.3){
             y = 0.3;
         }// Randomize the height slightly
-        grassPositions3.push_back(glm::vec3(x-0.2, y-4.8, z-1.6));
+        grassPositions3.push_back(glm::vec3(x-0.3, y-8.05, z-2.9));
         grassRotation3.push_back(rand() % 180);
     }
-    // transparent VAO
+
+
+    //stairs
+    float cubeVertices[] = {
+            // back face
+            -1.5f, -0.5f, -0.5f,  0.0f, 0.0f, // bottom-left
+            1.5f, -0.5f, -0.5f,  1.0f, 0.0f, // bottom-right
+            1.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
+            1.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
+            -1.5f,  0.5f, -0.5f,  0.0f, 1.0f, // top-left
+            -1.5f, -0.5f, -0.5f,  0.0f, 0.0f, // bottom-left
+            // front face
+            -1.5f, -0.5f,  0.9f,  0.0f, 0.0f, // bottom-left
+            1.5f,  0.5f,  0.9f,  1.0f, 1.0f, // top-right
+            1.5f, -0.5f,  0.9f,  1.0f, 0.0f, // bottom-right
+            1.5f,  0.5f,  0.9f,  1.0f, 1.0f, // top-right
+            -1.5f, -0.5f,  0.9f,  0.0f, 0.0f, // bottom-left
+            -1.5f,  0.5f,  0.9f,  0.0f, 1.0f, // top-left
+            // left face
+            -1.5f,  0.5f,  0.9f,  1.0f, 0.0f, // top-right
+            -1.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-left
+            -1.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-left
+            -1.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-left
+            -1.5f,  0.5f,  0.9f,  1.0f, 0.0f, // top-right
+            -1.5f, -0.5f,  0.9f,  0.0f, 0.0f, // bottom-right
+            // right face
+            1.5f,  0.5f,  0.9f,  1.0f, 0.0f, // top-left
+            1.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
+            1.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-right
+            1.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-right
+            1.5f, -0.5f,  0.9f,  0.0f, 0.0f, // bottom-left
+            1.5f,  0.5f,  0.9f,  1.0f, 0.0f, // top-left
+            // bottom face
+            -1.5f, -0.5f, -0.5f,  0.0f, 1.0f, // top-right
+            1.5f, -0.5f,  0.9f,  1.0f, 0.0f, // bottom-left
+            1.5f, -0.5f, -0.5f,  1.0f, 1.0f, // top-left
+            1.5f, -0.5f,  0.9f,  1.0f, 0.0f, // bottom-left
+            -1.5f, -0.5f, -0.5f,  0.0f, 1.0f, // top-right
+            -1.5f, -0.5f,  0.9f,  0.0f, 0.0f, // bottom-right
+            // top face
+            -1.5f,  0.5f, -0.5f,  0.0f, 1.0f, // top-left
+            1.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
+            1.5f,  0.5f,  0.9f,  1.0f, 0.0f, // bottom-right
+            1.5f,  0.5f,  0.9f,  1.0f, 0.0f, // bottom-right
+            -1.5f,  0.5f,  0.9f,  0.0f, 0.0f, // bottom-left
+            -1.5f,  0.5f, -0.5f,  0.0f, 1.0f  // top-left
+    };
+    glad_glFrontFace(GL_CW);
+    float transparentVerticesCube[] = {
+            0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
+            0.0f, -0.5f,  0.0f,  0.0f,  1.0f,
+            1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+
+            0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
+            1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+            1.0f,  0.5f,  0.0f,  1.0f,  0.0f
+    };
+//  stairs VAO
+    unsigned int cubeVAO, cubeVBO;
+    glGenVertexArrays(1, &cubeVAO);
+    glGenBuffers(1, &cubeVBO);
+    glBindVertexArray(cubeVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), &cubeVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+
     unsigned int transparentVAO, transparentVBO;
     glGenVertexArrays(1, &transparentVAO);
     glGenBuffers(1, &transparentVBO);
     glBindVertexArray(transparentVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, transparentVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(transparentVertices), transparentVertices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, transparentVAO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(transparentVerticesCube), transparentVerticesCube, GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(1);
@@ -324,7 +403,8 @@ int main() {
     glBindVertexArray(0);
 
     // load textures
-    // -------------
+    // stairs texture
+    unsigned int cubeTexture = loadTexture(FileSystem::getPath("resources/textures/marble3.jpg").c_str());
     // Grass texture
     unsigned int grassTexture = loadTexture(FileSystem::getPath("resources/textures/grass.png").c_str());
 
@@ -401,8 +481,19 @@ int main() {
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    blendingShader.use();
-    blendingShader.setInt("texture1", 0);
+    auto startTime1_1 = std::chrono::steady_clock::now();
+    auto startTime1_2 = std::chrono::steady_clock::now() + std::chrono::milliseconds (234);
+    auto startTime1_3 = std::chrono::steady_clock::now() + std::chrono::milliseconds (432);
+    auto startTime1_4 = std::chrono::steady_clock::now() + std::chrono::milliseconds (932);
+    auto startTime1_5 = std::chrono::steady_clock::now() + std::chrono::milliseconds (164);
+    auto startTime1_6 = std::chrono::steady_clock::now() + std::chrono::milliseconds (532);
+
+    auto startTime2_1 = std::chrono::steady_clock::now() + std::chrono::milliseconds (542);
+    auto startTime2_2 = std::chrono::steady_clock::now() + std::chrono::milliseconds (212);
+    auto startTime2_3 = std::chrono::steady_clock::now() + std::chrono::milliseconds (934);
+    auto startTime2_4 = std::chrono::steady_clock::now() + std::chrono::milliseconds (532);
+    auto startTime2_5 = std::chrono::steady_clock::now() + std::chrono::milliseconds (223);
+    auto startTime2_6 = std::chrono::steady_clock::now() + std::chrono::milliseconds (811);
 
     // render loop
     // -----------
@@ -423,6 +514,7 @@ int main() {
         glClearColor(programState->clearColor.r, programState->clearColor.g, programState->clearColor.b, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        //camera control
         if((glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) && programState->CameraMouseMovementUpdateEnabled == true){
             programState->CameraMouseMovementUpdateEnabled = !programState->CameraMouseMovementUpdateEnabled;
         }
@@ -474,7 +566,7 @@ int main() {
             model = glm::scale(model, glm::vec3(programState->fireScale));
             ourShader.setMat4("model", model);
             fire.Draw(ourShader);
-            pointLight.ambient = glm::vec3(30.0, 30.0, 30.0);
+            pointLight.ambient = glm::vec3(60.0, 60.0, 60.0);
 
         }
         if ((glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) and light_on_off == true){
@@ -507,8 +599,155 @@ int main() {
         ourShader.setMat4("model", model);
         mammoth2.Draw(ourShader);
 
+        //blending
+        blendingShader.use();
+
+        model = glm::mat4(1.0f);
+        blendingShader.setMat4("projection", projection);
+        blendingShader.setMat4("view", view);
+
+        glEnable(GL_CULL_FACE);
+
+        //stairs
+        float newStairHeight;
+        //stair1.1
+        glBindVertexArray(cubeVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, cubeTexture);
+        model = glm::mat4(1.0f);
+        newStairHeight = calculateHeight(-3,1,0.4,startTime1_1);
+        model = glm::translate(model, glm::vec3(-14.0f, newStairHeight, 36.0f));
+        model = glm::scale(model, glm::vec3(2.0f));
+        model = glm::rotate(model, glm::radians(-24.0f), glm::vec3 (0.0, 1.0f, 0.0f));
+        blendingShader.setMat4("model", model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        //stair1.2
+        glBindVertexArray(cubeVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, cubeTexture);
+        model = glm::mat4(1.0f);
+        newStairHeight = calculateHeight(-7,1,0.4,startTime1_2);
+        model = glm::translate(model, glm::vec3(-18.3f, newStairHeight, 40.7f));
+        model = glm::scale(model, glm::vec3(2.0f));
+        model = glm::rotate(model, glm::radians(-60.0f), glm::vec3 (0.0, 1.0f, 0.0f));
+        blendingShader.setMat4("model", model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        //stair1.3
+        glBindVertexArray(cubeVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, cubeTexture);
+        model = glm::mat4(1.0f);
+        newStairHeight = calculateHeight(-11,1,0.4,startTime1_3);
+        model = glm::translate(model, glm::vec3(-25.0f, newStairHeight, 41.5f));
+        model = glm::scale(model, glm::vec3(2.0f));
+        model = glm::rotate(model, glm::radians(-105.0f), glm::vec3 (0.0, 1.0f, 0.0f));
+        blendingShader.setMat4("model", model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        //stair1.4
+        glBindVertexArray(cubeVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, cubeTexture);
+        model = glm::mat4(1.0f);
+        newStairHeight = calculateHeight(-15,1,0.4,startTime1_4);
+        model = glm::translate(model, glm::vec3(-31.5f, newStairHeight, 37.0f));
+        model = glm::scale(model, glm::vec3(2.0f));
+        model = glm::rotate(model, glm::radians(40.0f), glm::vec3 (0.0, 1.0f, 0.0f));
+        blendingShader.setMat4("model", model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        //stair1.5
+        glBindVertexArray(cubeVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, cubeTexture);
+        model = glm::mat4(1.0f);
+        newStairHeight = calculateHeight(-19,1,0.4,startTime1_5);
+        model = glm::translate(model, glm::vec3(-33.5f, newStairHeight, 29.5f));
+        model = glm::scale(model, glm::vec3(2.0f));
+        model = glm::rotate(model, glm::radians(10.0f), glm::vec3 (0.0, 1.0f, 0.0f));
+        blendingShader.setMat4("model", model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        //stair1.6
+        glBindVertexArray(cubeVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, cubeTexture);
+        model = glm::mat4(1.0f);
+        newStairHeight = calculateHeight(-23,1,0.4,startTime1_6);
+        model = glm::translate(model, glm::vec3(-33.0f, newStairHeight, 22.0f));
+        model = glm::scale(model, glm::vec3(2.0f));
+        model = glm::rotate(model, glm::radians(-15.0f), glm::vec3 (0.0, 1.0f, 0.0f));
+        blendingShader.setMat4("model", model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+
+        //stair2.1
+        glBindVertexArray(cubeVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, cubeTexture);
+        model = glm::mat4(1.0f);
+        newStairHeight = calculateHeight(-26,1,0.4,startTime2_1);
+        model = glm::translate(model, glm::vec3(-38, newStairHeight, -29.9f));
+        model = glm::scale(model, glm::vec3(2.0f));
+        model = glm::rotate(model, glm::radians(14.0f), glm::vec3 (0.0, 1.0f, 0.0f));
+        blendingShader.setMat4("model", model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        //stair2.2
+        glBindVertexArray(cubeVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, cubeTexture);
+        model = glm::mat4(1.0f);
+        newStairHeight = calculateHeight(-30.4,1,0.4,startTime2_2);
+        model = glm::translate(model, glm::vec3(-37.5, newStairHeight, -35.9f));
+        model = glm::scale(model, glm::vec3(2.0f));
+        model = glm::rotate(model, glm::radians(-20.0f), glm::vec3 (0.0, 1.0f, 0.0f));
+        blendingShader.setMat4("model", model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        //stair2.3
+        glBindVertexArray(cubeVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, cubeTexture);
+        model = glm::mat4(1.0f);
+        newStairHeight = calculateHeight(-34.8,1,0.4,startTime2_3);
+        model = glm::translate(model, glm::vec3(-33, newStairHeight, -40.25));
+        model = glm::scale(model, glm::vec3(2.0f));
+        model = glm::rotate(model, glm::radians(-62.0f), glm::vec3 (0.0, 1.0f, 0.0f));
+        blendingShader.setMat4("model", model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        //stair2.4
+        glBindVertexArray(cubeVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, cubeTexture);
+        model = glm::mat4(1.0f);
+        newStairHeight = calculateHeight(-39.2,1,0.4,startTime2_4);
+        model = glm::translate(model, glm::vec3(-27.5, newStairHeight, -40.8f));
+        model = glm::scale(model, glm::vec3(2.0f));
+        model = glm::rotate(model, glm::radians(-90.0f), glm::vec3 (0.0, 1.0f, 0.0f));
+        blendingShader.setMat4("model", model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        //stair2.5
+        glBindVertexArray(cubeVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, cubeTexture);
+        model = glm::mat4(1.0f);
+        newStairHeight = calculateHeight(-43.6,1,0.4,startTime2_5);
+        model = glm::translate(model, glm::vec3(-22.1f, newStairHeight, -38.99f));
+        model = glm::scale(model, glm::vec3(2.0f));
+        model = glm::rotate(model, glm::radians(-120.0f), glm::vec3 (0.0, 1.0f, 0.0f));
+        blendingShader.setMat4("model", model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        //stair2.6
+        glBindVertexArray(cubeVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, cubeTexture);
+        model = glm::mat4(1.0f);
+        newStairHeight = calculateHeight(-48,1,0.4,startTime2_6);
+        model = glm::translate(model, glm::vec3(-18.5f, newStairHeight, -35.7f));
+        model = glm::scale(model, glm::vec3(2.0f));
+        model = glm::rotate(model, glm::radians(40.0f), glm::vec3 (0.0, 1.0f, 0.0f));
+        blendingShader.setMat4("model", model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
 
         glDisable(GL_CULL_FACE);
+
         // grass
         blendingShader.use();
         glm::mat4 grassM = glm::mat4(1.0f);
@@ -517,35 +756,35 @@ int main() {
         glBindVertexArray(transparentVAO);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, grassTexture);
-        for (unsigned int i = 0; i < 299; i++)
+        for (unsigned int i = 0; i < 1799; i++)
         {
             grassM = glm::mat4(1.0f);
-            grassM = glm::scale(grassM, glm::vec3(10.0f));
+            grassM = glm::scale(grassM, glm::vec3(6.0f));
             grassM = glm::translate(grassM, grassPositions1[i]);
             grassM = glm::rotate(grassM ,glm::radians(grassRotation1[i]), glm::vec3(0.0f ,1.0f, 0.0f));
             blendingShader.setMat4("model", grassM);
             glDrawArrays(GL_TRIANGLES, 0, 6);
         }
-        for (unsigned int i = 0; i < 199; i++)
+        for (unsigned int i = 0; i < 699; i++)
         {
             grassM = glm::mat4(1.0f);
-            grassM = glm::scale(grassM, glm::vec3(10.0f));
+            grassM = glm::scale(grassM, glm::vec3(6.0f));
             grassM = glm::translate(grassM, grassPositions2[i]);
             grassM = glm::rotate(grassM ,glm::radians(grassRotation2[i]), glm::vec3(0.0f ,1.0f, 0.0f));
             blendingShader.setMat4("model", grassM);
             glDrawArrays(GL_TRIANGLES, 0, 6);
         }
 
-        for (unsigned int i = 0; i < 99; i++)
+        for (unsigned int i = 0; i < 499; i++)
         {
             grassM = glm::mat4(1.0f);
-            grassM = glm::scale(grassM, glm::vec3(10.0f));
+            grassM = glm::scale(grassM, glm::vec3(6.0f));
             grassM = glm::translate(grassM, grassPositions3[i]);
             grassM = glm::rotate(grassM ,glm::radians(grassRotation3[i]), glm::vec3(0.0f ,1.0f, 0.0f));
             blendingShader.setMat4("model", grassM);
             glDrawArrays(GL_TRIANGLES, 0, 6);
         }
-        glEnable(GL_CULL_FACE);
+
 
         //skybox
         glDepthFunc(GL_LEQUAL);
@@ -599,6 +838,7 @@ void processInput(GLFWwindow *window) {
         programState->camera.ProcessKeyboard(LEFT, 0.18);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         programState->camera.ProcessKeyboard(RIGHT, 0.18);
+
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -752,3 +992,19 @@ unsigned int loadTexture(char const * path)
 
     return textureID;
 }
+
+
+// Function to calculate the height of the model over time
+float calculateHeight(float initialHeight, float amplitude, float frequency, std::chrono::steady_clock::time_point startTime) {
+    auto currentTime = std::chrono::steady_clock::now(); // Get current time
+    float elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count() / 1000.0f; // Convert to seconds
+
+    // Calculate vertical displacement using a sinusoidal function
+    float verticalDisplacement = amplitude * sin(2 * M_PI * frequency * elapsedTime);
+
+    // Calculate the new height of the model
+    float newHeight = initialHeight + verticalDisplacement;
+
+    return newHeight;
+}
+
