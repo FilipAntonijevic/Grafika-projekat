@@ -6,5 +6,5 @@ Tf 1.00 1.00 1.00
 Ni 1.00
 Ks 1.00 1.00 1.00
 Ns 100.00
-map_Ka Campfire_MAT_BaseColor_00.jpg
-map_Kd Campfire_MAT_BaseColor_00.jpg
+map_Ka Campfire_fire_MAT_BaseColor.jpg
+map_Kd Campfire_fire_MAT_BaseColor.jpg

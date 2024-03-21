@@ -1,6 +1,6 @@
 # This file uses centimeters as units for non-parametric coordinates.
 
-mtllib campfire.mtl
+mtllib campfire2.mtl
 g default
 v 4.596858 41.812050 -3.620544
 v 4.513808 42.501503 -4.396919

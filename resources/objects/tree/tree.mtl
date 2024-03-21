@@ -1,0 +1,117 @@
+# 3ds Max Wavefront OBJ Exporter v0.97b - (c)2007 guruware
+# File Created: 11.06.2020 01:11:10
+
+newmtl Bark01_SHD
+	Ns 10.0000
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.5880 0.5880 0.5880
+	Kd 0.5880 0.5880 0.5880
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.0000 0.0000 0.0000
+	map_Ka AS11_Bark01_dif_su.png
+	map_Kd AS11_Bark01_dif_su.png
+	map_bump AS11_Bark01_nml_su.png
+	bump AS11_Bark01_nml_su.png
+
+newmtl Bark02_SHD
+	Ns 10.0000
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.5880 0.5880 0.5880
+	Kd 0.5880 0.5880 0.5880
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.0000 0.0000 0.0000
+	map_Ka AS11_Bark01_dif_su.png
+	map_Kd AS11_Bark01_dif_su.png
+	map_bump AS11_Bark01_nml_su.png
+	bump AS11_Bark01_nml_su.png
+
+newmtl Bark03_SHD
+	Ns 10.0000
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.5880 0.5880 0.5880
+	Kd 0.5880 0.5880 0.5880
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.0000 0.0000 0.0000
+	map_Ka AS11_Bark02_dif_su.png
+	map_Kd AS11_Bark02_dif_su.png
+	map_bump AS11_Bark01_nml_su.png
+	bump AS11_Bark01_nml_su.png
+
+newmtl Branch01_SHD
+	Ns 10.0000
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.5880 0.5880 0.5880
+	Kd 0.5880 0.5880 0.5880
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.0000 0.0000 0.0000
+	map_Ka AS11_Branch01_dif_su.png
+	map_Kd AS11_Branch01_dif_su.png
+	map_bump AS11_Branch01_nml_su.png
+	bump AS11_Branch01_nml_su.png
+
+newmtl Leaf01_su_SHD
+	Ns 10.0000
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.5880 0.5880 0.5880
+	Kd 0.5880 0.5880 0.5880
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.0000 0.0000 0.0000
+	map_Ka AS11_Leaf01Front_dif_su.png
+	map_Kd AS11_Leaf01Front_dif_su.png
+	map_d AS11_Leaf01_alp_su.png
+	map_bump AS11_Leaf01_nml_su.png
+	bump AS11_Leaf01_nml_su.png
+
+newmtl Leaf02_su_SHD
+	Ns 10.0000
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.5880 0.5880 0.5880
+	Kd 0.5880 0.5880 0.5880
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.0000 0.0000 0.0000
+	map_Ka AS11_Leaf02Front_dif_su.png
+	map_Kd AS11_Leaf02Front_dif_su.png
+	map_d AS11_Leaf02_alp_su.png
+	map_bump AS11_Leaf02_nml_su.png
+	bump AS11_Leaf02_nml_su.png
+
+newmtl Leaf03_su_SHD
+	Ns 10.0000
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.5880 0.5880 0.5880
+	Kd 0.5880 0.5880 0.5880
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.0000 0.0000 0.0000
+	map_Ka AS11_Leaf03Front_dif_su.png
+	map_Kd AS11_Leaf03Front_dif_su.png
+	map_d AS11_Leaf03_alp_su.png
+	map_bump AS11_Leaf03_nml_su.png
+	bump AS11_Leaf03_nml_su.png

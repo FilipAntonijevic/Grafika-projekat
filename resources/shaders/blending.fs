@@ -8,7 +8,10 @@ uniform sampler2D texture1;
 void main()
 {
     vec4 texColor = texture(texture1, TexCoords);
-    if(texColor.a < 0.5)
+    vec3 darkerColor = vec3(0.8, 0.8, 0.8); // You can adjust these values to control the darkness
+        vec3 finalColor = texColor.rgb * darkerColor;
+    if(texColor.a < 0.6)
         discard;
-    FragColor = texColor;
-}
+    FragColor = vec4(finalColor, texColor.a);
+
+    }

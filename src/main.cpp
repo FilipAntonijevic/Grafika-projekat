@@ -70,17 +70,28 @@ struct ProgramState {
     bool ImGuiEnabled = false;
     Camera camera;
     bool CameraMouseMovementUpdateEnabled = true;
-    glm::vec3 mammoth1Position = glm::vec3(5, -0.7, 0);
+    glm::vec3 mammoth1Position = glm::vec3(-15, -0.7, -3);
     glm::vec3 mammoth2Position = glm::vec3(-41, -23.5, -8);
+    glm::vec3 treePosition = glm::vec3(20, -19, 5);
     glm::vec3 islandPosition = glm::vec3(-60, 215.0f, -43);
-    glm::vec3 toroPosition = glm::vec3(-17, -0.7, -17);
-    glm::vec3 firePosition = glm::vec3(-17, 6.5, -17);
+    glm::vec3 toro1Position = glm::vec3(8, -0.7, 34);
+    glm::vec3 fire1Position = glm::vec3(8, 4.7, 34);
+    glm::vec3 toro2Position = glm::vec3(-25, -23.4, -22);
+    glm::vec3 fire2Position = glm::vec3(-25, -18, -22);
+    glm::vec3 toro3Position = glm::vec3(12, -49.3, -27);
+    glm::vec3 fire3Position = glm::vec3(12, -43.9, -27);
+
+    float treeScale = 0.17;
     float mammoth1Scale = 0.1f;
-    float mammoth2Scale = 0.07f;
+    float mammoth2Scale = 0.08f;
     float islandScale = 1.5f;
-    float toroScale = 11.6008f;
-    float fireScale = 0.02010f;
-    PointLight pointLight;
+    float toro1Scale = 9;
+    float toro2Scale = 9;
+    float toro3Scale = 9;
+    float fireScale = 0.017;
+    PointLight pointLight1;
+    PointLight pointLight2;
+    PointLight pointLight3;
     ProgramState()
             : camera(glm::vec3(0.0f, 0.0f, 3.0f)) {}
 
@@ -188,31 +199,60 @@ int main() {
     Shader blendingShader("resources/shaders/blending.vs", "resources/shaders/blending.fs");
     // load models
     // -----------
+    Model tree("resources/objects/tree/tree.obj");
     Model island("resources/objects/island1/4.obj");
-    island.SetShaderTextureNamePrefix("material.");
-
     Model mammoth1("resources/objects/mammoth/mammoth.obj");
-    mammoth1.SetShaderTextureNamePrefix("material.");
-
     Model mammoth2("resources/objects/mammoth/mammoth.obj");
+    Model TMP("resources/objects/mammoth/mammoth.obj");  //apsolutno ne znam zasto al bez ova dva tmp modela
+    Model TMP2("resources/objects/mammoth/mammoth.obj"); //prvi ispod, u vom slucaju toro1, se ne ucitava do kraja (fali kugla na vrhu).
+    Model toro1("resources/objects/toro/Toro.obj");
+    Model toro2("resources/objects/toro/Toro.obj");
+    Model toro3("resources/objects/toro/Toro.obj");
+    Model fire2("resources/objects/fire/campfire.obj");
+    Model fire3("resources/objects/fire/campfire.obj");
+    Model fire1("resources/objects/fire/campfire.obj");
+
+    tree.SetShaderTextureNamePrefix("material.");
+    island.SetShaderTextureNamePrefix("material.");
+    mammoth1.SetShaderTextureNamePrefix("material.");
     mammoth2.SetShaderTextureNamePrefix("material.");
+    toro1.SetShaderTextureNamePrefix("materijal.");
+    toro2.SetShaderTextureNamePrefix("materijal.");
+    toro3.SetShaderTextureNamePrefix("materijal.");
+    fire1.SetShaderTextureNamePrefix("materijal.");
+    fire2.SetShaderTextureNamePrefix("materijal.");
+    fire3.SetShaderTextureNamePrefix("materijal.");
 
-    Model toro("resources/objects/toro/Toro.obj");
-    toro.SetShaderTextureNamePrefix("materijal.");
 
-    //Model fire("resources/objects/campfire2/Campfire.obj");
-    Model fire("resources/objects/fire/campfire2.obj");
-    fire.SetShaderTextureNamePrefix("materijal.");
+    PointLight& Light1 = programState->pointLight1;
+    Light1.position = glm::vec3(8, 4.7, 34);
+    Light1.ambient = glm::vec3(0.0, 0.0, 0.0);
+    Light1.diffuse = glm::vec3(0.9, 0.9, 0.9);
+    Light1.specular = glm::vec3(1.0, 1.0, 1.0);
 
-    PointLight& pointLight = programState->pointLight;
-    pointLight.position = glm::vec3(-17.0f, 8.0, -17.0);
-    pointLight.ambient = glm::vec3(15.0, 15.0, 15.0);
-    pointLight.diffuse = glm::vec3(0.9, 0.9, 0.9);
-    pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
+    Light1.constant = 17.0f;
+    Light1.linear = 0.09f;
+    Light1.quadratic = 0.032f;
 
-    pointLight.constant = 17.0f;
-    pointLight.linear = 0.09f;
-    pointLight.quadratic = 0.032f;
+    PointLight& Light2 = programState->pointLight2;
+    Light2.position = glm::vec3(-25, -18, -22);
+    Light2.ambient = glm::vec3(0.0, 0.0, 0.0);
+    Light2.diffuse = glm::vec3(0.9, 0.9, 0.9);
+    Light2.specular = glm::vec3(1.0, 1.0, 1.0);
+
+    Light2.constant = 17.0f;
+    Light2.linear = 0.09f;
+    Light2.quadratic = 0.032f;
+
+    PointLight& Light3 = programState->pointLight3;
+    Light3.position = glm::vec3(12, -43.9, -27);
+    Light3.ambient = glm::vec3(0.0, 0.0, 0.0);
+    Light3.diffuse = glm::vec3(0.9, 0.9, 0.9);
+    Light3.specular = glm::vec3(1.0, 1.0, 1.0);
+
+    Light3.constant = 17.0f;
+    Light3.linear = 0.09f;
+    Light3.quadratic = 0.032f;
 
     // Grass vertices
     float transparentVertices[] = {
@@ -246,7 +286,7 @@ int main() {
         float angle = glm::two_pi<float>() * i / numGrass; // Calculate angle for each grass element
         float x = (radius * cos(angle))*rand()/(RAND_MAX);
         if(abs(x) >4.7 || abs(x) < 2){
-             x = (radius * cos(angle))*rand()/(RAND_MAX);
+            x = (radius * cos(angle))*rand()/(RAND_MAX);
         }
         float z = (radius * sin(angle))*rand()/(RAND_MAX);
         if(abs(z) >4.7 || abs(z) < 2){
@@ -404,7 +444,9 @@ int main() {
 
     // load textures
     // stairs texture
+    //unsigned int cubeTexture = loadTexture(FileSystem::getPath("resources/textures/gray_marble.jpg").c_str());
     unsigned int cubeTexture = loadTexture(FileSystem::getPath("resources/textures/marble3.jpg").c_str());
+
     // Grass texture
     unsigned int grassTexture = loadTexture(FileSystem::getPath("resources/textures/grass.png").c_str());
 
@@ -494,6 +536,9 @@ int main() {
     auto startTime2_4 = std::chrono::steady_clock::now() + std::chrono::milliseconds (532);
     auto startTime2_5 = std::chrono::steady_clock::now() + std::chrono::milliseconds (223);
     auto startTime2_6 = std::chrono::steady_clock::now() + std::chrono::milliseconds (811);
+    float newStairHeight;
+    float stairsMovementFrequency = 0.4;
+    float stairsMovementAmplitude = 1.1;
 
     // render loop
     // -----------
@@ -523,15 +568,41 @@ int main() {
         }
         // don't forget to enable shader before setting uniforms
         ourShader.use();
+
+        // directional light
+        ourShader.setVec3("dirLight.direction", -4, 5.0f, 5);
+        ourShader.setVec3("dirLight.ambient", 0.35f, 0.35f, 0.35f);
+        ourShader.setVec3("dirLight.diffuse", 0.5f, 0.4f, 0.4f);
+        ourShader.setVec3("dirLight.specular", 0.1f, 0.1f, 0.1f);
+        
         //ovo sam promenio
         //pointLight.position = glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame));
-        ourShader.setVec3("pointLight.position", pointLight.position);
-        ourShader.setVec3("pointLight.ambient", pointLight.ambient);
-        ourShader.setVec3("pointLight.diffuse", pointLight.diffuse);
-        ourShader.setVec3("pointLight.specular", pointLight.specular);
-        ourShader.setFloat("pointLight.constant", pointLight.constant);
-        ourShader.setFloat("pointLight.linear", pointLight.linear);
-        ourShader.setFloat("pointLight.quadratic", pointLight.quadratic);
+        //1
+        ourShader.setVec3("pointLight1.position", Light1.position);
+        ourShader.setVec3("pointLight1.ambient", Light1.ambient);
+        ourShader.setVec3("pointLight1.diffuse", Light1.diffuse);
+        ourShader.setVec3("pointLight1.specular", Light1.specular);
+        ourShader.setFloat("pointLight1.constant", Light1.constant);
+        ourShader.setFloat("pointLight1.linear", Light1.linear);
+        ourShader.setFloat("pointLight1.quadratic", Light1.quadratic);
+        //2
+        ourShader.setVec3("pointLight2.position", Light2.position);
+        ourShader.setVec3("pointLight2.ambient", Light2.ambient);
+        ourShader.setVec3("pointLight2.diffuse", Light2.diffuse);
+        ourShader.setVec3("pointLight2.specular", Light2.specular);
+        ourShader.setFloat("pointLight2.constant", Light2.constant);
+        ourShader.setFloat("pointLight2.linear", Light2.linear);
+        ourShader.setFloat("pointLight2.quadratic", Light2.quadratic);
+        //3
+        ourShader.setVec3("pointLight3.position", Light3.position);
+        ourShader.setVec3("pointLight3.ambient", Light3.ambient);
+        ourShader.setVec3("pointLight3.diffuse", Light3.diffuse);
+        ourShader.setVec3("pointLight3.specular", Light3.specular);
+        ourShader.setFloat("pointLight3.constant", Light3.constant);
+        ourShader.setFloat("pointLight3.linear", Light3.linear);
+        ourShader.setFloat("pointLight3.quadratic", Light3.quadratic);
+
+
         ourShader.setVec3("viewPosition", programState->camera.Position);
         ourShader.setFloat("material.shininess", 32.0f);
         // view/projection transformations
@@ -541,16 +612,41 @@ int main() {
         ourShader.setMat4("projection", projection);
         ourShader.setMat4("view", view);
 
+
+
         // render the loaded model
         glm::mat4 model;
 
-        //toro
+        //island
         model = glm::mat4(1.0f);
-        model = glm::translate(model, programState->toroPosition);
-        model = glm::scale(model, glm::vec3(programState->toroScale));
+        model = glm::translate(model, programState->islandPosition);
+        model = glm::scale(model, glm::vec3(programState->islandScale));
+        ourShader.setMat4("model", model);
+        island.Draw(ourShader);
+
+        //toro1
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, programState->toro1Position);
+        model = glm::scale(model, glm::vec3(programState->toro1Scale));
         model = glm::rotate(model, glm::radians(180.0f), glm::vec3 (0.0, 1.0f, 0.0f));
         ourShader.setMat4("model", model);
-        toro.Draw(ourShader);
+        toro1.Draw(ourShader);
+
+        //toro2
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, programState->toro2Position);
+        model = glm::scale(model, glm::vec3(programState->toro2Scale));
+        model = glm::rotate(model, glm::radians(180.0f), glm::vec3 (0.0, 1.0f, 0.0f));
+        ourShader.setMat4("model", model);
+        toro2.Draw(ourShader);
+
+        //toro3
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, programState->toro3Position);
+        model = glm::scale(model, glm::vec3(programState->toro3Scale));
+        model = glm::rotate(model, glm::radians(180.0f), glm::vec3 (0.0, 1.0f, 0.0f));
+        ourShader.setMat4("model", model);
+        toro3.Draw(ourShader);
 
 
         if ((glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) && light_on_off == false){
@@ -560,26 +656,46 @@ int main() {
 
         if(light_on_off == true){
 
-            //fire
+            //fire1
             model = glm::mat4(1.0f);
-            model = glm::translate(model, programState->firePosition);
+            model = glm::translate(model, programState->fire1Position);
             model = glm::scale(model, glm::vec3(programState->fireScale));
             ourShader.setMat4("model", model);
-            fire.Draw(ourShader);
-            pointLight.ambient = glm::vec3(60.0, 60.0, 60.0);
+            fire1.Draw(ourShader);
+            Light1.ambient = glm::vec3(15.0, 13.0, 13.0);
+
+            //fire2
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, programState->fire2Position);
+            model = glm::scale(model, glm::vec3(programState->fireScale));
+            ourShader.setMat4("model", model);
+            fire2.Draw(ourShader);
+            Light2.ambient = glm::vec3(15.0, 13.0, 13.0);
+
+            //fire3
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, programState->fire3Position);
+            model = glm::scale(model, glm::vec3(programState->fireScale));
+            ourShader.setMat4("model", model);
+            fire3.Draw(ourShader);
+            Light3.ambient = glm::vec3(15.0, 13.0, 13.0);
 
         }
         if ((glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) and light_on_off == true){
             light_on_off = false;
-            pointLight.ambient = glm::vec3(15.0, 15.0, 15.0);
-        }
+            Light1.ambient = glm::vec3(0.0, 0.00, 0.0);
+            Light2.ambient = glm::vec3(0.0, 0.00, 0.0);
+            Light3.ambient = glm::vec3(0.0, 0.00, 0.0);
 
-        //island
+        }
+        //tree
         model = glm::mat4(1.0f);
-        model = glm::translate(model, programState->islandPosition);
-        model = glm::scale(model, glm::vec3(programState->islandScale));
+        model = glm::translate(model, programState->treePosition);
+        model = glm::scale(model, glm::vec3(programState->treeScale));
+        model = glm::rotate(model, glm::radians(180.0f), glm::vec3 (1.0, 0.0f, 0.0f));
+        model = glm::rotate(model, glm::radians(140.0f), glm::vec3 (0.0, 0.0f, 1.0f));
         ourShader.setMat4("model", model);
-        island.Draw(ourShader);
+        tree.Draw(ourShader);
 
         //mammoth1
         model = glm::mat4(1.0f);
@@ -609,13 +725,12 @@ int main() {
         glEnable(GL_CULL_FACE);
 
         //stairs
-        float newStairHeight;
         //stair1.1
         glBindVertexArray(cubeVAO);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, cubeTexture);
         model = glm::mat4(1.0f);
-        newStairHeight = calculateHeight(-3,1,0.4,startTime1_1);
+        newStairHeight = calculateHeight(-3,stairsMovementAmplitude,stairsMovementFrequency,startTime1_1);
         model = glm::translate(model, glm::vec3(-14.0f, newStairHeight, 36.0f));
         model = glm::scale(model, glm::vec3(2.0f));
         model = glm::rotate(model, glm::radians(-24.0f), glm::vec3 (0.0, 1.0f, 0.0f));
@@ -626,7 +741,7 @@ int main() {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, cubeTexture);
         model = glm::mat4(1.0f);
-        newStairHeight = calculateHeight(-7,1,0.4,startTime1_2);
+        newStairHeight = calculateHeight(-7,stairsMovementAmplitude,stairsMovementFrequency,startTime1_2);
         model = glm::translate(model, glm::vec3(-18.3f, newStairHeight, 40.7f));
         model = glm::scale(model, glm::vec3(2.0f));
         model = glm::rotate(model, glm::radians(-60.0f), glm::vec3 (0.0, 1.0f, 0.0f));
@@ -637,7 +752,7 @@ int main() {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, cubeTexture);
         model = glm::mat4(1.0f);
-        newStairHeight = calculateHeight(-11,1,0.4,startTime1_3);
+        newStairHeight = calculateHeight(-11,stairsMovementAmplitude,stairsMovementFrequency,startTime1_3);
         model = glm::translate(model, glm::vec3(-25.0f, newStairHeight, 41.5f));
         model = glm::scale(model, glm::vec3(2.0f));
         model = glm::rotate(model, glm::radians(-105.0f), glm::vec3 (0.0, 1.0f, 0.0f));
@@ -648,7 +763,7 @@ int main() {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, cubeTexture);
         model = glm::mat4(1.0f);
-        newStairHeight = calculateHeight(-15,1,0.4,startTime1_4);
+        newStairHeight = calculateHeight(-15,stairsMovementAmplitude,stairsMovementFrequency,startTime1_4);
         model = glm::translate(model, glm::vec3(-31.5f, newStairHeight, 37.0f));
         model = glm::scale(model, glm::vec3(2.0f));
         model = glm::rotate(model, glm::radians(40.0f), glm::vec3 (0.0, 1.0f, 0.0f));
@@ -659,7 +774,7 @@ int main() {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, cubeTexture);
         model = glm::mat4(1.0f);
-        newStairHeight = calculateHeight(-19,1,0.4,startTime1_5);
+        newStairHeight = calculateHeight(-19,stairsMovementAmplitude,stairsMovementFrequency,startTime1_5);
         model = glm::translate(model, glm::vec3(-33.5f, newStairHeight, 29.5f));
         model = glm::scale(model, glm::vec3(2.0f));
         model = glm::rotate(model, glm::radians(10.0f), glm::vec3 (0.0, 1.0f, 0.0f));
@@ -670,7 +785,7 @@ int main() {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, cubeTexture);
         model = glm::mat4(1.0f);
-        newStairHeight = calculateHeight(-23,1,0.4,startTime1_6);
+        newStairHeight = calculateHeight(-23,stairsMovementAmplitude,stairsMovementFrequency,startTime1_6);
         model = glm::translate(model, glm::vec3(-33.0f, newStairHeight, 22.0f));
         model = glm::scale(model, glm::vec3(2.0f));
         model = glm::rotate(model, glm::radians(-15.0f), glm::vec3 (0.0, 1.0f, 0.0f));
@@ -683,7 +798,7 @@ int main() {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, cubeTexture);
         model = glm::mat4(1.0f);
-        newStairHeight = calculateHeight(-26,1,0.4,startTime2_1);
+        newStairHeight = calculateHeight(-26,stairsMovementAmplitude,stairsMovementFrequency,startTime2_1);
         model = glm::translate(model, glm::vec3(-38, newStairHeight, -29.9f));
         model = glm::scale(model, glm::vec3(2.0f));
         model = glm::rotate(model, glm::radians(14.0f), glm::vec3 (0.0, 1.0f, 0.0f));
@@ -694,7 +809,7 @@ int main() {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, cubeTexture);
         model = glm::mat4(1.0f);
-        newStairHeight = calculateHeight(-30.4,1,0.4,startTime2_2);
+        newStairHeight = calculateHeight(-30.4,stairsMovementAmplitude,stairsMovementFrequency,startTime2_2);
         model = glm::translate(model, glm::vec3(-37.5, newStairHeight, -35.9f));
         model = glm::scale(model, glm::vec3(2.0f));
         model = glm::rotate(model, glm::radians(-20.0f), glm::vec3 (0.0, 1.0f, 0.0f));
@@ -705,7 +820,7 @@ int main() {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, cubeTexture);
         model = glm::mat4(1.0f);
-        newStairHeight = calculateHeight(-34.8,1,0.4,startTime2_3);
+        newStairHeight = calculateHeight(-34.8,stairsMovementAmplitude,stairsMovementFrequency,startTime2_3);
         model = glm::translate(model, glm::vec3(-33, newStairHeight, -40.25));
         model = glm::scale(model, glm::vec3(2.0f));
         model = glm::rotate(model, glm::radians(-62.0f), glm::vec3 (0.0, 1.0f, 0.0f));
@@ -716,7 +831,7 @@ int main() {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, cubeTexture);
         model = glm::mat4(1.0f);
-        newStairHeight = calculateHeight(-39.2,1,0.4,startTime2_4);
+        newStairHeight = calculateHeight(-39.2,stairsMovementAmplitude,stairsMovementFrequency,startTime2_4);
         model = glm::translate(model, glm::vec3(-27.5, newStairHeight, -40.8f));
         model = glm::scale(model, glm::vec3(2.0f));
         model = glm::rotate(model, glm::radians(-90.0f), glm::vec3 (0.0, 1.0f, 0.0f));
@@ -727,7 +842,7 @@ int main() {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, cubeTexture);
         model = glm::mat4(1.0f);
-        newStairHeight = calculateHeight(-43.6,1,0.4,startTime2_5);
+        newStairHeight = calculateHeight(-43.6,stairsMovementAmplitude,stairsMovementFrequency,startTime2_5);
         model = glm::translate(model, glm::vec3(-22.1f, newStairHeight, -38.99f));
         model = glm::scale(model, glm::vec3(2.0f));
         model = glm::rotate(model, glm::radians(-120.0f), glm::vec3 (0.0, 1.0f, 0.0f));
@@ -738,7 +853,7 @@ int main() {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, cubeTexture);
         model = glm::mat4(1.0f);
-        newStairHeight = calculateHeight(-48,1,0.4,startTime2_6);
+        newStairHeight = calculateHeight(-48,stairsMovementAmplitude,stairsMovementFrequency,startTime2_6);
         model = glm::translate(model, glm::vec3(-18.5f, newStairHeight, -35.7f));
         model = glm::scale(model, glm::vec3(2.0f));
         model = glm::rotate(model, glm::radians(40.0f), glm::vec3 (0.0, 1.0f, 0.0f));
@@ -891,9 +1006,9 @@ void DrawImGui(ProgramState *programState) {
         ImGui::DragFloat("island scale", &programState->islandScale, 0.05, 0.1, 4.0);
 
 
-        ImGui::DragFloat("pointLight.constant", &programState->pointLight.constant, 0.05, 0.0, 1.0);
-        ImGui::DragFloat("pointLight.linear", &programState->pointLight.linear, 0.05, 0.0, 1.0);
-        ImGui::DragFloat("pointLight.quadratic", &programState->pointLight.quadratic, 0.05, 0.0, 1.0);
+        ImGui::DragFloat("pointLight.constant", &programState->pointLight1.constant, 0.05, 0.0, 1.0);
+        ImGui::DragFloat("pointLight.linear", &programState->pointLight1.linear, 0.05, 0.0, 1.0);
+        ImGui::DragFloat("pointLight.quadratic", &programState->pointLight1.quadratic, 0.05, 0.0, 1.0);
         ImGui::End();
     }
 
