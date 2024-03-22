@@ -40,12 +40,44 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 
 unsigned int loadTexture(char const * path);
 
+//light delay
+void resetTimer(std::string s);
+double getElapsedTime(std::string s);
+
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-// camera
+// getElapsedTime()
+std::chrono::steady_clock::time_point startTimeFire;
+std::chrono::steady_clock::time_point startTimeTree;
+std::chrono::steady_clock::time_point currentTime;
 
+//variables and constants
+auto startTime1_1 = std::chrono::steady_clock::now();
+auto startTime1_2 = std::chrono::steady_clock::now() + std::chrono::milliseconds (234);
+auto startTime1_3 = std::chrono::steady_clock::now() + std::chrono::milliseconds (792);
+auto startTime1_4 = std::chrono::steady_clock::now() + std::chrono::milliseconds (132);
+auto startTime1_5 = std::chrono::steady_clock::now() + std::chrono::milliseconds (764);
+auto startTime1_6 = std::chrono::steady_clock::now() + std::chrono::milliseconds (332);
+
+auto startTime2_1 = std::chrono::steady_clock::now() + std::chrono::milliseconds (542);
+auto startTime2_2 = std::chrono::steady_clock::now() + std::chrono::milliseconds (212);
+auto startTime2_3 = std::chrono::steady_clock::now() + std::chrono::milliseconds (934);
+auto startTime2_4 = std::chrono::steady_clock::now() + std::chrono::milliseconds (532);
+auto startTime2_5 = std::chrono::steady_clock::now() + std::chrono::milliseconds (223);
+auto startTime2_6 = std::chrono::steady_clock::now() + std::chrono::milliseconds (811);
+float newStairHeight;
+float stairsMovementFrequency = 0.36;
+float stairsMovementAmplitude = 1.2;
+
+bool no_mouse = true;
+bool light_on_off = false;
+bool tree_red = false;
+double elapsedTimeFire;
+double elapsedTimeTree;
+
+// camera
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -70,7 +102,7 @@ struct ProgramState {
     bool ImGuiEnabled = false;
     Camera camera;
     bool CameraMouseMovementUpdateEnabled = true;
-    glm::vec3 mammoth1Position = glm::vec3(-15, -0.7, -3);
+    glm::vec3 mammoth1Position = glm::vec3(-15, -0.7, -9);
     glm::vec3 mammoth2Position = glm::vec3(-41, -23.5, -8);
     glm::vec3 treePosition = glm::vec3(20, -19, 5);
     glm::vec3 islandPosition = glm::vec3(-60, 215.0f, -43);
@@ -81,7 +113,7 @@ struct ProgramState {
     glm::vec3 toro3Position = glm::vec3(12, -49.3, -27);
     glm::vec3 fire3Position = glm::vec3(12, -43.9, -27);
 
-    float treeScale = 0.17;
+    float treeScale = 0.19;
     float mammoth1Scale = 0.1f;
     float mammoth2Scale = 0.08f;
     float islandScale = 1.5f;
@@ -146,7 +178,6 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    bool light_on_off = false;
     // glfw window creation
     // --------------------
     GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "grafika", NULL, NULL);
@@ -184,27 +215,26 @@ int main() {
     ImGuiIO &io = ImGui::GetIO();
     (void) io;
 
-
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330 core");
 
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
-
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // build and compile shaders
-    // -------------------------
     Shader ourShader("resources/shaders/2.model_lighting.vs", "resources/shaders/2.model_lighting.fs");
     Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
     Shader blendingShader("resources/shaders/blending.vs", "resources/shaders/blending.fs");
     // load models
-    // -----------
-    Model tree("resources/objects/tree/tree.obj");
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    Model tree1("resources/objects/tree/tree.obj");
+    Model tree2("resources/objects/tree2/tree.obj");
+    Model tree3("resources/objects/tree3/tree.obj");
+    Model tree4("resources/objects/tree4/tree.obj");
     Model island("resources/objects/island1/4.obj");
     Model mammoth1("resources/objects/mammoth/mammoth.obj");
     Model mammoth2("resources/objects/mammoth/mammoth.obj");
-    Model TMP("resources/objects/mammoth/mammoth.obj");  //apsolutno ne znam zasto al bez ova dva tmp modela
-    Model TMP2("resources/objects/mammoth/mammoth.obj"); //prvi ispod, u vom slucaju toro1, se ne ucitava do kraja (fali kugla na vrhu).
     Model toro1("resources/objects/toro/Toro.obj");
     Model toro2("resources/objects/toro/Toro.obj");
     Model toro3("resources/objects/toro/Toro.obj");
@@ -212,24 +242,26 @@ int main() {
     Model fire3("resources/objects/fire/campfire.obj");
     Model fire1("resources/objects/fire/campfire.obj");
 
-    tree.SetShaderTextureNamePrefix("material.");
+    tree1.SetShaderTextureNamePrefix("material.");
+    tree2.SetShaderTextureNamePrefix("material.");
+    tree3.SetShaderTextureNamePrefix("material.");
+    tree4.SetShaderTextureNamePrefix("material.");
     island.SetShaderTextureNamePrefix("material.");
     mammoth1.SetShaderTextureNamePrefix("material.");
     mammoth2.SetShaderTextureNamePrefix("material.");
-    toro1.SetShaderTextureNamePrefix("materijal.");
-    toro2.SetShaderTextureNamePrefix("materijal.");
-    toro3.SetShaderTextureNamePrefix("materijal.");
-    fire1.SetShaderTextureNamePrefix("materijal.");
-    fire2.SetShaderTextureNamePrefix("materijal.");
-    fire3.SetShaderTextureNamePrefix("materijal.");
-
-
+    toro1.SetShaderTextureNamePrefix("material.");
+    toro2.SetShaderTextureNamePrefix("material.");
+    toro3.SetShaderTextureNamePrefix("material.");
+    fire1.SetShaderTextureNamePrefix("material.");
+    fire2.SetShaderTextureNamePrefix("material.");
+    fire3.SetShaderTextureNamePrefix("material.");
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    //Lights
     PointLight& Light1 = programState->pointLight1;
     Light1.position = glm::vec3(8, 4.7, 34);
     Light1.ambient = glm::vec3(0.0, 0.0, 0.0);
     Light1.diffuse = glm::vec3(0.9, 0.9, 0.9);
     Light1.specular = glm::vec3(1.0, 1.0, 1.0);
-
     Light1.constant = 17.0f;
     Light1.linear = 0.09f;
     Light1.quadratic = 0.032f;
@@ -239,7 +271,6 @@ int main() {
     Light2.ambient = glm::vec3(0.0, 0.0, 0.0);
     Light2.diffuse = glm::vec3(0.9, 0.9, 0.9);
     Light2.specular = glm::vec3(1.0, 1.0, 1.0);
-
     Light2.constant = 17.0f;
     Light2.linear = 0.09f;
     Light2.quadratic = 0.032f;
@@ -249,14 +280,13 @@ int main() {
     Light3.ambient = glm::vec3(0.0, 0.0, 0.0);
     Light3.diffuse = glm::vec3(0.9, 0.9, 0.9);
     Light3.specular = glm::vec3(1.0, 1.0, 1.0);
-
     Light3.constant = 17.0f;
     Light3.linear = 0.09f;
     Light3.quadratic = 0.032f;
-
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Grass vertices
     float transparentVertices[] = {
-            // positions         // texture Coords (swapped y coordinates because texture is flipped upside down)
+            // positions
             0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
             0.0f, -0.5f,  0.0f,  0.0f,  1.0f,
             1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
@@ -276,10 +306,11 @@ int main() {
     vector<glm::vec3> grassPositions3;
     vector<float> grassRotation3;
 
+    vector<glm::vec3> grassPositions4;
+    vector<float> grassRotation4;
 // Define parameters for the circle
     int numGrass = 1799;
-    float radius = 5.2f; // Adjust the radius as needed
-
+    float radius = 5.3f; // Adjust the radius as needed
 // Generate grass positions in a circle
 //1
     for (int i = 0; i < numGrass; i+=2) {
@@ -296,7 +327,7 @@ int main() {
         if(y < 0.3){
             y = 0.3;
         }// Randomize the height slightly
-        grassPositions1.push_back(glm::vec3(x+0.4, y, z+0.59));
+        grassPositions1.push_back(glm::vec3(x+0.4, y, z+0.64));
         grassRotation1.push_back(rand() % 180);
     }
     for (int i =1; i < numGrass; i+=2) {
@@ -307,12 +338,11 @@ int main() {
         if(y < 0.3){
             y = 0.3;
         }// Randomize the height slightly
-        grassPositions1.push_back(glm::vec3(x+0.4, y, z+0.59));
+        grassPositions1.push_back(glm::vec3(x+0.4, y, z+0.64));
         grassRotation1.push_back(rand() % 180);
     }
-//2
-
-    radius = 3.25;
+    //2
+    radius = 2.9;
     numGrass = 699;
     for (int i = 0; i < numGrass; i+=2) {
         float angle = glm::two_pi<float>() * i / numGrass; // Calculate angle for each grass element
@@ -322,7 +352,7 @@ int main() {
         if(y < 0.3){
             y = 0.3;
         }// Randomize the height slightly
-        grassPositions2.push_back(glm::vec3(x-4.5, y-3.7, z-0.49));
+        grassPositions2.push_back(glm::vec3(x-5.05, y-3.7, z-0.88));
         grassRotation2.push_back(rand() % 180);
     }
     for (int i =1; i < numGrass; i+=2) {
@@ -333,12 +363,12 @@ int main() {
         if(y < 0.3){
             y = 0.3;
         }// Randomize the height slightly
-        grassPositions2.push_back(glm::vec3(x-4.8, y-3.7, z-0.49));
+        grassPositions2.push_back(glm::vec3(x-5.05, y-3.7, z-0.88));
         grassRotation2.push_back(rand() % 180);
     }
-
-    radius = 2.7;
-    numGrass = 499;
+    //3
+    radius = 2.8;
+    numGrass = 599;
     for (int i = 0; i < numGrass; i+=2) {
         float angle = glm::two_pi<float>() * i / numGrass; // Calculate angle for each grass element
         float x = (radius * cos(angle))*rand()/(RAND_MAX);
@@ -347,7 +377,7 @@ int main() {
         if(y < 0.3){
             y = 0.3;
         }// Randomize the height slightly
-        grassPositions3.push_back(glm::vec3(x-0.3, y-8.05, z-2.9));
+        grassPositions3.push_back(glm::vec3(x-0.3, y-8.05, z-2.7));
         grassRotation3.push_back(rand() % 180);
     }
     for (int i =1; i < numGrass; i+=2) {
@@ -358,11 +388,23 @@ int main() {
         if(y < 0.3){
             y = 0.3;
         }// Randomize the height slightly
-        grassPositions3.push_back(glm::vec3(x-0.3, y-8.05, z-2.9));
+        grassPositions3.push_back(glm::vec3(x-0.3, y-8.05, z-2.7));
         grassRotation3.push_back(rand() % 180);
     }
-
-
+    //4 dodatak
+    for(int i = 0; i< 30; i++){
+        grassPositions4.push_back(glm::vec3(-4-(i/10), -3.4, 2.5));
+        grassRotation4.push_back(rand() % 180);
+    }
+    for(int i = 0; i< 20; i++){
+        grassPositions4.push_back(glm::vec3(-4-(i/10), -3.4, 3));
+        grassRotation4.push_back(rand() % 180);
+    }
+    for(int i = 0; i< 20; i++){
+        grassPositions4.push_back(glm::vec3(-4.3-(i/10), -3.4, 3.2));
+        grassRotation4.push_back(rand() % 180);
+    }
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     //stairs
     float cubeVertices[] = {
             // back face
@@ -429,7 +471,7 @@ int main() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     unsigned int transparentVAO, transparentVBO;
     glGenVertexArrays(1, &transparentVAO);
     glGenBuffers(1, &transparentVBO);
@@ -442,14 +484,11 @@ int main() {
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     glBindVertexArray(0);
 
-    // load textures
-    // stairs texture
-    //unsigned int cubeTexture = loadTexture(FileSystem::getPath("resources/textures/gray_marble.jpg").c_str());
+    // load stairs texture
     unsigned int cubeTexture = loadTexture(FileSystem::getPath("resources/textures/marble3.jpg").c_str());
-
-    // Grass texture
+    // load grass texture
     unsigned int grassTexture = loadTexture(FileSystem::getPath("resources/textures/grass.png").c_str());
-
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     float skyboxVertices[] = {
             // positions
             -1.0f,  1.0f, -1.0f,
@@ -513,71 +552,48 @@ int main() {
                     FileSystem::getPath("/resources/textures/skybox/nz.jpg"),
                     FileSystem::getPath("/resources/textures/skybox/pz.jpg")
             };
-
-
     unsigned int cubemapTexture = loadCubemap(faces);
 
     skyboxShader.use();
     skyboxShader.setInt("skybox",0);
-
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    auto startTime1_1 = std::chrono::steady_clock::now();
-    auto startTime1_2 = std::chrono::steady_clock::now() + std::chrono::milliseconds (234);
-    auto startTime1_3 = std::chrono::steady_clock::now() + std::chrono::milliseconds (432);
-    auto startTime1_4 = std::chrono::steady_clock::now() + std::chrono::milliseconds (932);
-    auto startTime1_5 = std::chrono::steady_clock::now() + std::chrono::milliseconds (164);
-    auto startTime1_6 = std::chrono::steady_clock::now() + std::chrono::milliseconds (532);
-
-    auto startTime2_1 = std::chrono::steady_clock::now() + std::chrono::milliseconds (542);
-    auto startTime2_2 = std::chrono::steady_clock::now() + std::chrono::milliseconds (212);
-    auto startTime2_3 = std::chrono::steady_clock::now() + std::chrono::milliseconds (934);
-    auto startTime2_4 = std::chrono::steady_clock::now() + std::chrono::milliseconds (532);
-    auto startTime2_5 = std::chrono::steady_clock::now() + std::chrono::milliseconds (223);
-    auto startTime2_6 = std::chrono::steady_clock::now() + std::chrono::milliseconds (811);
-    float newStairHeight;
-    float stairsMovementFrequency = 0.4;
-    float stairsMovementAmplitude = 1.1;
-
     // render loop
-    // -----------
     while (!glfwWindowShouldClose(window)) {
         // per-frame time logic
-        // --------------------
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
         // input
-        // -----
         processInput(window);
-
-
+        if(no_mouse) {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        }else{
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        }
+        if ((glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)) {
+            no_mouse = false;
+        }
+        if ((glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS)) {
+            no_mouse = true;
+        }
         // render
-        // ------
         glClearColor(programState->clearColor.r, programState->clearColor.g, programState->clearColor.b, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        //camera control
-        if((glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) && programState->CameraMouseMovementUpdateEnabled == true){
-            programState->CameraMouseMovementUpdateEnabled = !programState->CameraMouseMovementUpdateEnabled;
-        }
-        if((glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) && programState->CameraMouseMovementUpdateEnabled == false){
-            programState->CameraMouseMovementUpdateEnabled = true;
-        }
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         // don't forget to enable shader before setting uniforms
         ourShader.use();
 
         // directional light
         ourShader.setVec3("dirLight.direction", -4, 5.0f, 5);
-        ourShader.setVec3("dirLight.ambient", 0.35f, 0.35f, 0.35f);
-        ourShader.setVec3("dirLight.diffuse", 0.5f, 0.4f, 0.4f);
+        ourShader.setVec3("dirLight.ambient", 0.55f, 0.55f, 0.55f);
+        ourShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
         ourShader.setVec3("dirLight.specular", 0.1f, 0.1f, 0.1f);
-        
-        //ovo sam promenio
-        //pointLight.position = glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame));
-        //1
+
+        //Point light 1
         ourShader.setVec3("pointLight1.position", Light1.position);
         ourShader.setVec3("pointLight1.ambient", Light1.ambient);
         ourShader.setVec3("pointLight1.diffuse", Light1.diffuse);
@@ -585,7 +601,7 @@ int main() {
         ourShader.setFloat("pointLight1.constant", Light1.constant);
         ourShader.setFloat("pointLight1.linear", Light1.linear);
         ourShader.setFloat("pointLight1.quadratic", Light1.quadratic);
-        //2
+        //Point light 2
         ourShader.setVec3("pointLight2.position", Light2.position);
         ourShader.setVec3("pointLight2.ambient", Light2.ambient);
         ourShader.setVec3("pointLight2.diffuse", Light2.diffuse);
@@ -593,7 +609,7 @@ int main() {
         ourShader.setFloat("pointLight2.constant", Light2.constant);
         ourShader.setFloat("pointLight2.linear", Light2.linear);
         ourShader.setFloat("pointLight2.quadratic", Light2.quadratic);
-        //3
+        //Point light 3
         ourShader.setVec3("pointLight3.position", Light3.position);
         ourShader.setVec3("pointLight3.ambient", Light3.ambient);
         ourShader.setVec3("pointLight3.diffuse", Light3.diffuse);
@@ -611,18 +627,33 @@ int main() {
         glm::mat4 view = programState->camera.GetViewMatrix();
         ourShader.setMat4("projection", projection);
         ourShader.setMat4("view", view);
-
-
-
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         // render the loaded model
         glm::mat4 model;
-
         //island
         model = glm::mat4(1.0f);
         model = glm::translate(model, programState->islandPosition);
         model = glm::scale(model, glm::vec3(programState->islandScale));
         ourShader.setMat4("model", model);
         island.Draw(ourShader);
+
+        //mammoth1
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, programState->mammoth1Position);
+        model = glm::scale(model, glm::vec3(programState->mammoth1Scale));
+        model = glm::rotate(model, glm::radians(-90.0f), glm::vec3 (1.0, 0.0f, 0.0f));
+        model = glm::rotate(model, glm::radians(160.0f), glm::vec3 (0.0, 0.0f, 1.0f));
+        ourShader.setMat4("model", model);
+        mammoth1.Draw(ourShader);
+
+        //mammoth2
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, programState->mammoth2Position);
+        model = glm::scale(model, glm::vec3(programState->mammoth2Scale));
+        model = glm::rotate(model, glm::radians(-90.0f), glm::vec3 (1.0, 0.0f, 0.0f));
+        model = glm::rotate(model, glm::radians(100.0f), glm::vec3 (0.0, 0.0f, 1.0f));
+        ourShader.setMat4("model", model);
+        mammoth2.Draw(ourShader);
 
         //toro1
         model = glm::mat4(1.0f);
@@ -648,73 +679,84 @@ int main() {
         ourShader.setMat4("model", model);
         toro3.Draw(ourShader);
 
-
+        //fire
         if ((glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) && light_on_off == false){
             light_on_off = true;
-
+            resetTimer("Fire");
         }
-
         if(light_on_off == true){
 
+            elapsedTimeFire = getElapsedTime("Fire");
             //fire1
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, programState->fire1Position);
-            model = glm::scale(model, glm::vec3(programState->fireScale));
-            ourShader.setMat4("model", model);
-            fire1.Draw(ourShader);
-            Light1.ambient = glm::vec3(15.0, 13.0, 13.0);
-
+            if (elapsedTimeFire >= 0.0) {
+                model = glm::mat4(1.0f);
+                model = glm::translate(model, programState->fire1Position);
+                model = glm::scale(model, glm::vec3(programState->fireScale));
+                ourShader.setMat4("model", model);
+                fire1.Draw(ourShader);
+                Light1.ambient = glm::vec3(16.0, 13.0, 13.0);
+            }
             //fire2
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, programState->fire2Position);
-            model = glm::scale(model, glm::vec3(programState->fireScale));
-            ourShader.setMat4("model", model);
-            fire2.Draw(ourShader);
-            Light2.ambient = glm::vec3(15.0, 13.0, 13.0);
-
+            if (elapsedTimeFire >= 0.45) {
+                model = glm::mat4(1.0f);
+                model = glm::translate(model, programState->fire2Position);
+                model = glm::scale(model, glm::vec3(programState->fireScale));
+                ourShader.setMat4("model", model);
+                fire2.Draw(ourShader);
+                Light2.ambient = glm::vec3(16.0, 13.0, 13.0);
+            }
             //fire3
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, programState->fire3Position);
-            model = glm::scale(model, glm::vec3(programState->fireScale));
-            ourShader.setMat4("model", model);
-            fire3.Draw(ourShader);
-            Light3.ambient = glm::vec3(15.0, 13.0, 13.0);
-
+            if (elapsedTimeFire >= 0.9) {
+                model = glm::mat4(1.0f);
+                model = glm::translate(model, programState->fire3Position);
+                model = glm::scale(model, glm::vec3(programState->fireScale));
+                ourShader.setMat4("model", model);
+                fire3.Draw(ourShader);
+                Light3.ambient = glm::vec3(16.0, 13.0, 13.0);
+            }
         }
         if ((glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) and light_on_off == true){
             light_on_off = false;
             Light1.ambient = glm::vec3(0.0, 0.00, 0.0);
             Light2.ambient = glm::vec3(0.0, 0.00, 0.0);
             Light3.ambient = glm::vec3(0.0, 0.00, 0.0);
+        }
+
+        // Tree
+        if ((glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) && tree_red == false){
+            tree_red = true;
+            resetTimer("Tree");
 
         }
-        //tree
         model = glm::mat4(1.0f);
         model = glm::translate(model, programState->treePosition);
         model = glm::scale(model, glm::vec3(programState->treeScale));
-        model = glm::rotate(model, glm::radians(180.0f), glm::vec3 (1.0, 0.0f, 0.0f));
-        model = glm::rotate(model, glm::radians(140.0f), glm::vec3 (0.0, 0.0f, 1.0f));
+        model = glm::rotate(model, glm::radians(180.0f), glm::vec3(1.0, 0.0f, 0.0f));
+        model = glm::rotate(model, glm::radians(140.0f), glm::vec3(0.0, 0.0f, 1.0f));
         ourShader.setMat4("model", model);
-        tree.Draw(ourShader);
+        if(tree_red){
+            elapsedTimeTree = getElapsedTime("Tree");
 
-        //mammoth1
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, programState->mammoth1Position);
-        model = glm::scale(model, glm::vec3(programState->mammoth1Scale));
-        model = glm::rotate(model, glm::radians(-90.0f), glm::vec3 (1.0, 0.0f, 0.0f));
-        model = glm::rotate(model, glm::radians(160.0f), glm::vec3 (0.0, 0.0f, 1.0f));
-        ourShader.setMat4("model", model);
-        mammoth1.Draw(ourShader);
-
-        //mammoth2
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, programState->mammoth2Position);
-        model = glm::scale(model, glm::vec3(programState->mammoth2Scale));
-        model = glm::rotate(model, glm::radians(-90.0f), glm::vec3 (1.0, 0.0f, 0.0f));
-        model = glm::rotate(model, glm::radians(100.0f), glm::vec3 (0.0, 0.0f, 1.0f));
-        ourShader.setMat4("model", model);
-        mammoth2.Draw(ourShader);
-
+            if (elapsedTimeTree < 2.5 && elapsedTimeTree >= 0.0) {
+                //tree2
+                tree2.Draw(ourShader);
+            }
+            if (elapsedTimeTree<5 && elapsedTimeTree >= 2.5) {
+                //tree3
+                tree3.Draw(ourShader);
+            }
+            if (elapsedTimeTree >= 5) {
+                //tree4
+                tree4.Draw(ourShader);
+            }
+        }else {
+            //tree
+            tree1.Draw(ourShader);
+        }
+        if ((glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) && tree_red == true){
+            tree_red = false;
+        }
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         //blending
         blendingShader.use();
 
@@ -792,7 +834,6 @@ int main() {
         blendingShader.setMat4("model", model);
         glDrawArrays(GL_TRIANGLES, 0, 36);
 
-
         //stair2.1
         glBindVertexArray(cubeVAO);
         glActiveTexture(GL_TEXTURE0);
@@ -860,7 +901,6 @@ int main() {
         blendingShader.setMat4("model", model);
         glDrawArrays(GL_TRIANGLES, 0, 36);
 
-
         glDisable(GL_CULL_FACE);
 
         // grass
@@ -890,7 +930,7 @@ int main() {
             glDrawArrays(GL_TRIANGLES, 0, 6);
         }
 
-        for (unsigned int i = 0; i < 499; i++)
+        for (unsigned int i = 0; i < 599; i++)
         {
             grassM = glm::mat4(1.0f);
             grassM = glm::scale(grassM, glm::vec3(6.0f));
@@ -899,7 +939,15 @@ int main() {
             blendingShader.setMat4("model", grassM);
             glDrawArrays(GL_TRIANGLES, 0, 6);
         }
-
+        for(unsigned int i = 0; i < 60; i++){
+            grassM = glm::mat4(1.0f);
+            grassM = glm::scale(grassM, glm::vec3(6.0f));
+            grassM = glm::translate(grassM, grassPositions4[i]);
+            grassM = glm::rotate(grassM ,glm::radians(grassRotation3[i]), glm::vec3(0.0f ,1.0f, 0.0f));
+            blendingShader.setMat4("model", grassM);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
         //skybox
         glDepthFunc(GL_LEQUAL);
@@ -915,6 +963,8 @@ int main() {
         glDrawArrays(GL_TRIANGLES, 0, 36);
         glBindVertexArray(0);
         glDepthFunc(GL_LESS);
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
         if (programState->ImGuiEnabled)
             DrawImGui(programState);
@@ -940,24 +990,26 @@ int main() {
 }
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
-// ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow *window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        programState->camera.ProcessKeyboard(FORWARD, 0.18);
+        programState->camera.ProcessKeyboard(FORWARD, 0.2);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        programState->camera.ProcessKeyboard(BACKWARD, 0.18);
+        programState->camera.ProcessKeyboard(BACKWARD, 0.2);
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        programState->camera.ProcessKeyboard(LEFT, 0.18);
+        programState->camera.ProcessKeyboard(LEFT, 0.2);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        programState->camera.ProcessKeyboard(RIGHT, 0.18);
+        programState->camera.ProcessKeyboard(RIGHT, 0.2);
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        programState->camera.ProcessKeyboard(UP, 0.18);
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+        programState->camera.ProcessKeyboard(DOWN, 0.18);
 
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
-// ---------------------------------------------------------------------------------------------
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
     // make sure the viewport matches the new window dimensions; note that width and
     // height will be significantly larger than specified on retina displays.
@@ -965,7 +1017,6 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
 }
 
 // glfw: whenever the mouse moves, this callback is called
-// -------------------------------------------------------
 void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
     if (firstMouse) {
         lastX = xpos;
@@ -979,12 +1030,15 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
     lastX = xpos;
     lastY = ypos;
 
+    float sensitivity = 1;
+    xoffset *= sensitivity;
+    yoffset *= sensitivity;
+
     if (programState->CameraMouseMovementUpdateEnabled)
         programState->camera.ProcessMouseMovement(xoffset, yoffset);
 }
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called
-// ----------------------------------------------------------------------
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
     programState->camera.ProcessMouseScroll(yoffset);
 }
@@ -1108,8 +1162,6 @@ unsigned int loadTexture(char const * path)
     return textureID;
 }
 
-
-// Function to calculate the height of the model over time
 float calculateHeight(float initialHeight, float amplitude, float frequency, std::chrono::steady_clock::time_point startTime) {
     auto currentTime = std::chrono::steady_clock::now(); // Get current time
     float elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count() / 1000.0f; // Convert to seconds
@@ -1123,3 +1175,19 @@ float calculateHeight(float initialHeight, float amplitude, float frequency, std
     return newHeight;
 }
 
+void resetTimer(std::string s) {
+    if(s == "Fire") {
+        startTimeFire = std::chrono::steady_clock::now();
+    }else if(s == "Tree"){
+        startTimeTree = std::chrono::steady_clock::now();
+    }
+}
+
+double getElapsedTime(std::string s) {
+    currentTime = std::chrono::steady_clock::now();
+    if(s == "Fire") {
+        return std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTimeFire).count() / 1000.0;
+    }else if(s == "Tree"){
+        return std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTimeTree).count() / 1000.0;
+    }
+}
