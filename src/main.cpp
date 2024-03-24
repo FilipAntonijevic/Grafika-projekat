@@ -81,6 +81,7 @@ double elapsedTimeTree;
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
+float movement_speed = 0.2;
 
 // timing
 float deltaTime = 0.0f;
@@ -238,9 +239,9 @@ int main() {
     Model toro1("resources/objects/toro/Toro.obj");
     Model toro2("resources/objects/toro/Toro.obj");
     Model toro3("resources/objects/toro/Toro.obj");
+    Model fire1("resources/objects/fire/campfire.obj");
     Model fire2("resources/objects/fire/campfire.obj");
     Model fire3("resources/objects/fire/campfire.obj");
-    Model fire1("resources/objects/fire/campfire.obj");
 
     tree1.SetShaderTextureNamePrefix("material.");
     tree2.SetShaderTextureNamePrefix("material.");
@@ -489,6 +490,7 @@ int main() {
     // load grass texture
     unsigned int grassTexture = loadTexture(FileSystem::getPath("resources/textures/grass.png").c_str());
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//skybox
     float skyboxVertices[] = {
             // positions
             -1.0f,  1.0f, -1.0f,
@@ -559,7 +561,9 @@ int main() {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
+    float random_angle = 0;
+    float fire_scale_mod = 0;
+    int fire_flicker_rate = 0;
     // render loop
     while (!glfwWindowShouldClose(window)) {
         // per-frame time logic
@@ -567,8 +571,17 @@ int main() {
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
+        //random_angle = rand() % 360;
         // input
         processInput(window);
+
+        //fire flicker angle and scale randomizer
+        if(fire_flicker_rate == 0) {
+            random_angle = rand() % 360;
+            fire_scale_mod = (rand()%10);
+            fire_scale_mod = fire_scale_mod/10000;
+        }
+
         if(no_mouse) {
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         }else{
@@ -691,28 +704,31 @@ int main() {
             if (elapsedTimeFire >= 0.0) {
                 model = glm::mat4(1.0f);
                 model = glm::translate(model, programState->fire1Position);
-                model = glm::scale(model, glm::vec3(programState->fireScale));
+                model = glm::scale(model, glm::vec3(programState->fireScale + fire_scale_mod));
+                model = glm::rotate(model,glm::radians(random_angle), glm::vec3 (0.0, 1.0f, 0.0f));
                 ourShader.setMat4("model", model);
                 fire1.Draw(ourShader);
-                Light1.ambient = glm::vec3(16.0, 13.0, 13.0);
+                Light1.ambient = glm::vec3(17.0, 13.0, 13.0);
             }
             //fire2
             if (elapsedTimeFire >= 0.45) {
                 model = glm::mat4(1.0f);
                 model = glm::translate(model, programState->fire2Position);
-                model = glm::scale(model, glm::vec3(programState->fireScale));
+                model = glm::scale(model, glm::vec3(programState->fireScale + fire_scale_mod));
+                model = glm::rotate(model,glm::radians(random_angle), glm::vec3 (0.0, 1.0f, 0.0f));
                 ourShader.setMat4("model", model);
                 fire2.Draw(ourShader);
-                Light2.ambient = glm::vec3(16.0, 13.0, 13.0);
+                Light2.ambient = glm::vec3(17.0, 13.0, 13.0);
             }
             //fire3
             if (elapsedTimeFire >= 0.9) {
                 model = glm::mat4(1.0f);
                 model = glm::translate(model, programState->fire3Position);
-                model = glm::scale(model, glm::vec3(programState->fireScale));
+                model = glm::scale(model, glm::vec3(programState->fireScale + fire_scale_mod));
+                model = glm::rotate(model,glm::radians(random_angle), glm::vec3 (0.0, 1.0f, 0.0f));
                 ourShader.setMat4("model", model);
                 fire3.Draw(ourShader);
-                Light3.ambient = glm::vec3(16.0, 13.0, 13.0);
+                Light3.ambient = glm::vec3(17.0, 13.0, 13.0);
             }
         }
         if ((glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) and light_on_off == true){
@@ -756,7 +772,7 @@ int main() {
         if ((glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) && tree_red == true){
             tree_red = false;
         }
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         //blending
         blendingShader.use();
 
@@ -965,7 +981,12 @@ int main() {
         glDepthFunc(GL_LESS);
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        //fire flicker
+        fire_flicker_rate++;
+        if(fire_flicker_rate == 5) //every 5 frames the fire rotates at a random angle and changes in size slightly
+            fire_flicker_rate = 0;
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         if (programState->ImGuiEnabled)
             DrawImGui(programState);
 
@@ -974,6 +995,7 @@ int main() {
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+    //end while
 
     programState->SaveToFile("resources/program_state.txt");
     delete programState;
@@ -993,19 +1015,22 @@ int main() {
 void processInput(GLFWwindow *window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
-
+    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+        movement_speed = 0.4;
+    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_RELEASE)
+        movement_speed = 0.18;
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        programState->camera.ProcessKeyboard(FORWARD, 0.2);
+        programState->camera.ProcessKeyboard(FORWARD, movement_speed);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        programState->camera.ProcessKeyboard(BACKWARD, 0.2);
+        programState->camera.ProcessKeyboard(BACKWARD, movement_speed);
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        programState->camera.ProcessKeyboard(LEFT, 0.2);
+        programState->camera.ProcessKeyboard(LEFT, movement_speed);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        programState->camera.ProcessKeyboard(RIGHT, 0.2);
+        programState->camera.ProcessKeyboard(RIGHT, movement_speed);
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-        programState->camera.ProcessKeyboard(UP, 0.18);
+        programState->camera.ProcessKeyboard(UP, 0.16);
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-        programState->camera.ProcessKeyboard(DOWN, 0.18);
+        programState->camera.ProcessKeyboard(DOWN, 0.16);
 
 }
 
@@ -1049,7 +1074,7 @@ void DrawImGui(ProgramState *programState) {
     ImGui::NewFrame();
 
 
-    {
+/*    {
         static float f = 0.0f;
         ImGui::Begin("Hello window");
         ImGui::Text("Hello text");
@@ -1064,7 +1089,7 @@ void DrawImGui(ProgramState *programState) {
         ImGui::DragFloat("pointLight.linear", &programState->pointLight1.linear, 0.05, 0.0, 1.0);
         ImGui::DragFloat("pointLight.quadratic", &programState->pointLight1.quadratic, 0.05, 0.0, 1.0);
         ImGui::End();
-    }
+    }*/
 
     {
         ImGui::Begin("Camera info");
@@ -1168,7 +1193,6 @@ float calculateHeight(float initialHeight, float amplitude, float frequency, std
 
     // Calculate vertical displacement using a sinusoidal function
     float verticalDisplacement = amplitude * sin(2 * M_PI * frequency * elapsedTime);
-
     // Calculate the new height of the model
     float newHeight = initialHeight + verticalDisplacement;
 
