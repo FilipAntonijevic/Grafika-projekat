@@ -72,10 +72,17 @@ float stairsMovementFrequency = 0.36;
 float stairsMovementAmplitude = 1.2;
 
 bool no_mouse = true;
-bool light_on_off = false;
+bool light_on = false;
 bool tree_red = false;
+
 double elapsedTimeFire;
 double elapsedTimeTree;
+
+float random_angle = 0;
+float fire_scale_mod = 0;
+int fire_flicker_rate = 0;
+
+glm::mat4 model;
 
 // camera
 float lastX = SCR_WIDTH / 2.0f;
@@ -169,7 +176,6 @@ void DrawImGui(ProgramState *programState);
 
 int main() {
     // glfw: initialize and configure
-    // ------------------------------
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -196,7 +202,6 @@ int main() {
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // glad: load all OpenGL function pointers
-    // ---------------------------------------
     if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
@@ -220,7 +225,6 @@ int main() {
     ImGui_ImplOpenGL3_Init("#version 330 core");
 
     // configure global opengl state
-    // -----------------------------
     glEnable(GL_DEPTH_TEST);
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // build and compile shaders
@@ -309,9 +313,8 @@ int main() {
 
     vector<glm::vec3> grassPositions4;
     vector<float> grassRotation4;
-// Define parameters for the circle
     int numGrass = 1799;
-    float radius = 5.3f; // Adjust the radius as needed
+    float radius = 5.3f;
 // Generate grass positions in a circle
 //1
     for (int i = 0; i < numGrass; i+=2) {
@@ -405,6 +408,7 @@ int main() {
         grassPositions4.push_back(glm::vec3(-4.3-(i/10), -3.4, 3.2));
         grassRotation4.push_back(rand() % 180);
     }
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     //stairs
     float cubeVertices[] = {
@@ -561,9 +565,7 @@ int main() {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    float random_angle = 0;
-    float fire_scale_mod = 0;
-    int fire_flicker_rate = 0;
+
     // render loop
     while (!glfwWindowShouldClose(window)) {
         // per-frame time logic
@@ -571,7 +573,6 @@ int main() {
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        //random_angle = rand() % 360;
         // input
         processInput(window);
 
@@ -582,16 +583,11 @@ int main() {
             fire_scale_mod = fire_scale_mod/10000;
         }
 
+        // cursor settings
         if(no_mouse) {
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         }else{
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-        }
-        if ((glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)) {
-            no_mouse = false;
-        }
-        if ((glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS)) {
-            no_mouse = true;
         }
         // render
         glClearColor(programState->clearColor.r, programState->clearColor.g, programState->clearColor.b, 1.0f);
@@ -642,7 +638,6 @@ int main() {
         ourShader.setMat4("view", view);
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         // render the loaded model
-        glm::mat4 model;
         //island
         model = glm::mat4(1.0f);
         model = glm::translate(model, programState->islandPosition);
@@ -693,11 +688,11 @@ int main() {
         toro3.Draw(ourShader);
 
         //fire
-        if ((glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) && light_on_off == false){
-            light_on_off = true;
+        if ((glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) && !light_on){
+            light_on = true;
             resetTimer("Fire");
         }
-        if(light_on_off == true){
+        if(light_on){
 
             elapsedTimeFire = getElapsedTime("Fire");
             //fire1
@@ -731,18 +726,17 @@ int main() {
                 Light3.ambient = glm::vec3(17.0, 13.0, 13.0);
             }
         }
-        if ((glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) and light_on_off == true){
-            light_on_off = false;
+        if ((glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) and light_on){
+            light_on = false;
             Light1.ambient = glm::vec3(0.0, 0.00, 0.0);
             Light2.ambient = glm::vec3(0.0, 0.00, 0.0);
             Light3.ambient = glm::vec3(0.0, 0.00, 0.0);
         }
 
         // Tree
-        if ((glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) && tree_red == false){
+        if ((glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) && !tree_red){
             tree_red = true;
             resetTimer("Tree");
-
         }
         model = glm::mat4(1.0f);
         model = glm::translate(model, programState->treePosition);
@@ -754,22 +748,22 @@ int main() {
             elapsedTimeTree = getElapsedTime("Tree");
 
             if (elapsedTimeTree < 2.5 && elapsedTimeTree >= 0.0) {
-                //tree2
+                //tree 2nd stage
                 tree2.Draw(ourShader);
             }
             if (elapsedTimeTree<5 && elapsedTimeTree >= 2.5) {
-                //tree3
+                //tree 3rd stage
                 tree3.Draw(ourShader);
             }
             if (elapsedTimeTree >= 5) {
-                //tree4
+                //tree 4th stage
                 tree4.Draw(ourShader);
             }
         }else {
-            //tree
+            //tree default stage
             tree1.Draw(ourShader);
         }
-        if ((glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) && tree_red == true){
+        if ((glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) && tree_red){
             tree_red = false;
         }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -781,7 +775,6 @@ int main() {
         blendingShader.setMat4("view", view);
 
         glEnable(GL_CULL_FACE);
-
         //stairs
         //stair1.1
         glBindVertexArray(cubeVAO);
@@ -918,7 +911,7 @@ int main() {
         glDrawArrays(GL_TRIANGLES, 0, 36);
 
         glDisable(GL_CULL_FACE);
-
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         // grass
         blendingShader.use();
         glm::mat4 grassM = glm::mat4(1.0f);
@@ -964,7 +957,6 @@ int main() {
             glDrawArrays(GL_TRIANGLES, 0, 6);
         }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
         //skybox
         glDepthFunc(GL_LEQUAL);
         skyboxShader.use();
@@ -991,11 +983,9 @@ int main() {
             DrawImGui(programState);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-        // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
         glfwPollEvents();
-    }
-    //end while
+    }//end while
 
     programState->SaveToFile("resources/program_state.txt");
     delete programState;
@@ -1003,7 +993,6 @@ int main() {
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
     // glfw: terminate, clearing all previously allocated GLFW resources.
-    // ------------------------------------------------------------------
     glDeleteVertexArrays(1, &skyboxVAO);
     glDeleteVertexArrays(1, &skyboxVBO);
 
@@ -1115,8 +1104,9 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         }
     }
+    if (key == GLFW_KEY_M && action == GLFW_PRESS)
+        no_mouse = !no_mouse;
 }
-
 
 unsigned int loadCubemap(vector<std::string> faces)
 {
