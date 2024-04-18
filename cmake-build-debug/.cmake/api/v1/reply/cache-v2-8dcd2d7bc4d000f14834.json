@@ -79,7 +79,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/home/filip/Desktop/Grafika-projekat/cmake-build-debug"
+			"value" : "/home/filip/Desktop/FAX/Grafika/Grafika-projekat/cmake-build-debug"
 		},
 		{
 			"name" : "CMAKE_CACHE_MAJOR_VERSION",
@@ -567,7 +567,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/home/filip/Desktop/Grafika-projekat/cmake-build-debug/CMakeFiles/pkgRedirects"
+			"value" : "/home/filip/Desktop/FAX/Grafika/Grafika-projekat/cmake-build-debug/CMakeFiles/pkgRedirects"
 		},
 		{
 			"name" : "CMAKE_GENERATOR",
@@ -627,7 +627,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/home/filip/Desktop/Grafika-projekat"
+			"value" : "/home/filip/Desktop/FAX/Grafika/Grafika-projekat"
 		},
 		{
 			"name" : "CMAKE_INSTALL_PREFIX",
@@ -1359,7 +1359,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/home/filip/Desktop/Grafika-projekat/cmake-build-debug"
+			"value" : "/home/filip/Desktop/FAX/Grafika/Grafika-projekat/cmake-build-debug"
 		},
 		{
 			"name" : "project_base_IS_TOP_LEVEL",
@@ -1383,7 +1383,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/home/filip/Desktop/Grafika-projekat"
+			"value" : "/home/filip/Desktop/FAX/Grafika/Grafika-projekat"
 		}
 	],
 	"kind" : "cache",

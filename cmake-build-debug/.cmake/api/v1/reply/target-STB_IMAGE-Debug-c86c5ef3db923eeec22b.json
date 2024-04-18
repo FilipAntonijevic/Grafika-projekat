@@ -59,11 +59,11 @@
 			[
 				{
 					"backtrace" : 2,
-					"path" : "/home/filip/Desktop/Grafika-projekat/cmake-build-debug/configuration"
+					"path" : "/home/filip/Desktop/FAX/Grafika/Grafika-projekat/cmake-build-debug/configuration"
 				},
 				{
 					"backtrace" : 3,
-					"path" : "/home/filip/Desktop/Grafika-projekat/include"
+					"path" : "/home/filip/Desktop/FAX/Grafika/Grafika-projekat/include"
 				}
 			],
 			"language" : "CXX",

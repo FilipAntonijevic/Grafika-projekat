@@ -2,7 +2,7 @@
 	"artifacts" : 
 	[
 		{
-			"path" : "/home/filip/Desktop/Grafika-projekat/project_base"
+			"path" : "/home/filip/Desktop/FAX/Grafika/Grafika-projekat/project_base"
 		}
 	],
 	"backtrace" : 1,
@@ -95,19 +95,19 @@
 			[
 				{
 					"backtrace" : 7,
-					"path" : "/home/filip/Desktop/Grafika-projekat/cmake-build-debug/configuration"
+					"path" : "/home/filip/Desktop/FAX/Grafika/Grafika-projekat/cmake-build-debug/configuration"
 				},
 				{
 					"backtrace" : 8,
-					"path" : "/home/filip/Desktop/Grafika-projekat/include"
+					"path" : "/home/filip/Desktop/FAX/Grafika/Grafika-projekat/include"
 				},
 				{
 					"backtrace" : 2,
-					"path" : "/home/filip/Desktop/Grafika-projekat/libs/glad/include"
+					"path" : "/home/filip/Desktop/FAX/Grafika/Grafika-projekat/libs/glad/include"
 				},
 				{
 					"backtrace" : 2,
-					"path" : "/home/filip/Desktop/Grafika-projekat/libs/imgui/include"
+					"path" : "/home/filip/Desktop/FAX/Grafika/Grafika-projekat/libs/imgui/include"
 				}
 			],
 			"language" : "CXX",

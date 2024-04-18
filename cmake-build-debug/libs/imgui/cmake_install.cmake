@@ -1,4 +1,4 @@
-# Install script for directory: /home/filip/Desktop/Grafika-projekat/libs/imgui
+# Install script for directory: /home/filip/Desktop/FAX/Grafika/Grafika-projekat/libs/imgui
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

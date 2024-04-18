@@ -193,7 +193,7 @@ int main() {
 
     // glfw window creation
     // --------------------
-    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "grafika", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Mamuti na ostrvu", NULL, NULL);
     if (window == NULL) {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -633,6 +633,7 @@ int main() {
     bloomShader.use();
     bloomShader.setInt("scene", 0);
     bloomShader.setInt("bloomBlur", 1);
+
 
     // render loop
     while (!glfwWindowShouldClose(window)) {
